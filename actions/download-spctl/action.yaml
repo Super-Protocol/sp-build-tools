@@ -1,0 +1,68 @@
+name: Download SPCTL
+description: Download SPCTL provided version
+
+inputs:
+  version:
+    type: string
+    default: latest
+  repository:
+    type: string
+    required: true
+    description: "Specify 'public' or 'private'"
+  gh_token:
+    type: string
+    description: 'GH token for downloading private SPCTL'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate repository input
+      shell: bash
+      run: |
+        if [ "${{ inputs.repository }}" != "public" ] && [ "${{ inputs.repository }}" != "private" ]; then
+          echo "Invalid repository type: ${{ inputs.repository }}"
+          exit 1
+        elif [ "${{ inputs.repository }}" == "private" ] && [ -z "${{ inputs.gh_token }}" ]; then
+          echo "For private repository gh_token is mandatory"
+          exit 1
+        fi
+
+    - name: Install fetch
+      shell: bash
+      run: |
+        curl -o /usr/local/bin/fetch -L "https://github.com/gruntwork-io/fetch/releases/download/v0.4.6/fetch_linux_amd64"
+        chmod +x /usr/local/bin/fetch
+        fetch --version
+
+    - name: Download SPCTL
+      shell: bash
+      run: |
+        GH_TOKEN="${{ inputs.gh_token }}"
+        OWNER=super-protocol
+        get_tag_version() {
+          local TAG_VERSION="$1"
+          local OWNER="$2"
+          local REPO="$3"
+          
+          if [ "$TAG_VERSION" = "latest" ]; then
+            TAG_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$OWNER/$REPO/releases/latest" | jq -r '.tag_name')
+          fi
+          
+          echo "$TAG_VERSION"
+        }
+        execute_fetch() {
+          local REPO="$1"
+          local TAG_VERSION="$2"
+          
+          if [ "${{ inputs.repository }}" = "public" ]; then
+            fetch --repo="https://github.com/$OWNER/$REPO" --tag="$TAG_VERSION" --release-asset="spctl-linux-x64" ./
+          else
+            fetch --repo="https://github.com/$OWNER/$REPO" --tag="$TAG_VERSION" --release-asset="spctl-linux-x64" --github-oauth-token="$GH_TOKEN" ./
+          fi
+          
+        }
+
+        REPO=$([[ "${{ inputs.repository }}" = "public" ]] && echo "ctl" || echo "spctl")
+        TAG_VERSION=$(get_tag_version ${{ inputs.version }} $OWNER $REPO)
+        execute_fetch $REPO $TAG_VERSION
+        mv ./spctl-linux-x64 ./spctl && chmod +x ./spctl

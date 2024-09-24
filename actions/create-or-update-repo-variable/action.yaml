@@ -1,0 +1,39 @@
+name: Create or update repository variable
+
+inputs:
+  gh_token:
+    type: string
+    description: 'GH token with access to repository'
+    required: true
+  variable_name:
+    type: string
+    description: 'Variable name to create or update'
+    required: true
+  data:
+    type: string
+    description: 'Data that should be set into variable'
+
+runs:
+  using: composite
+  steps:
+    - name: Create or update repo variable
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.gh_token }}
+        script: |
+          const variableName = '${{ inputs.variable_name }}';
+          const data = '${{ inputs.data }}';
+
+          let payload = {
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            name: variableName,
+            value: data
+          };
+
+          const variable = await github.rest.actions.getRepoVariable(payload).catch(() => null);
+          if (variable) {
+            await github.rest.actions.updateRepoVariable(payload);
+          } else {
+            await github.rest.actions.createRepoVariable(payload);
+          }

@@ -1,0 +1,107 @@
+name: Create workflow
+
+inputs:
+  tee_offers:
+    type: string
+    description: tee offers separated by comma (eg. 1,3)
+    required: true
+  base-image-offer:
+    type: string
+    description: Base image offer number
+  solution:
+    type: string
+    description: Solution offer number or path to file with solution resource
+    required: true
+  data:
+    type: string
+    description: Data offer number or path to data resource file
+    required: true
+  storage_offer:
+    type: string
+    description: Storage offer number
+    required: true
+  previous_orders:
+    type: string
+    description: Previous order numbers to cancel, separated by comma (eg. 100,102)
+  min_rent_minutes:
+    type: string
+    description: How long order should run
+    default: '129600'
+
+outputs:
+  order_ids:
+    description: Created order ids
+    value: ${{ steps.create-workflows.outputs.order_ids }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check SPCTL and validate input
+      shell: bash
+      run: |
+        if [ ! -f "./spctl" ]; then
+          echo "Error: spctl file is missing."
+          exit 1
+        fi
+
+        if [ ! -f "./config.json" ]; then
+          echo "Error: config.json file is missing."
+          exit 1
+        fi
+
+        if [ ! "$(echo ${{ inputs.solution }} | grep -E '[0-9]')" ]; then
+          if [ ! -f "${{ inputs.solution }}" ]; then
+            echo "Error: File specified by inputs.solution does not exist."
+            exit 1
+          fi
+        fi
+
+        if [ ! "$(echo ${{ inputs.data }} | grep -E '[0-9]')" ]; then
+          if [ ! -f "${{ inputs.data }}" ]; then
+            echo "Error: File specified by inputs.data does not exist."
+            exit 1
+          fi
+        fi
+
+    - name: Cancel previous orders
+      shell: bash
+      if: ${{ inputs.previous_orders != '' }}
+      run: |
+        # Split line like "order1,order2" by comma (,) and save orders to "orderIds" variable
+        IFS=',' read -ra orderIds <<< "${{ inputs.previous_orders }}"
+
+        for orderId in "${orderIds[@]}"; do
+          echo "Cancelling order $orderId"
+          ./spctl orders cancel $orderId || true
+        done
+
+    - name: Create workflows
+      id: create-workflows
+      shell: bash
+      run: |
+        orderIds=()
+
+        IFS=',' read -ra teeOfferIds <<< "${{ inputs.tee_offers }}"
+
+        for teeOffer in "${teeOfferIds[@]}"; do
+          COMMAND="./spctl workflows create --tee $teeOffer"
+
+          if [ -n "${{ inputs.base_image }}" ]; then
+            COMMAND="$COMMAND --solution ${{ inputs.base_image }}"
+          fi
+
+          COMMAND="$COMMAND --solution ${{ inputs.solution }} --data ${{ inputs.data }} --storage ${{ inputs.storage_offer }} --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} > workflow_result.txt"
+
+          echo "COMMAND=$COMMAND"
+
+          eval $COMMAND
+
+          cat workflow_result.txt
+          ORDER_ID=$(cat workflow_result.txt | grep -oP '\["\K\d+(?="\])') 
+
+          orderIds+=($ORDER_ID)
+        done
+
+        ORDER_IDS=$(IFS=','; echo "${orderIds[*]}")
+
+        echo "order_ids=$ORDER_IDS" >> $GITHUB_OUTPUT
