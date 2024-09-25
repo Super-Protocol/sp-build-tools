@@ -68,10 +68,7 @@ runs:
         token: ${{ inputs.gh_token }}
 
     - name: Setup yq
-      shell: bash
-      run: |
-        sudo apt update
-        sudo apt install yq -y
+      uses: chrisdickinson/setup-yq@latest
 
     - name: Modify cluster files
       shell: bash
