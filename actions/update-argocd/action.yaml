@@ -6,7 +6,7 @@ inputs:
     description: 'Token for GH argo repository'
     required: true
   target:
-    description: 'Specify "dev" or "stage" or "testnet"'
+    description: 'Specify "develop" or "stage" or "testnet"'
     required: true
   resource_type:
     description: 'Specify "solution" or "data"'
@@ -37,7 +37,7 @@ runs:
         elif [ "${{ inputs.commit_type }}" != "direct-commit" ] && [ "${{ inputs.commit_type }}" != "pull-request" ]; then
           echo "Invalid commit type: ${{ inputs.commit_type }}"
           exit 1
-        elif [ "${{ inputs.target }}" != "dev" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
+        elif [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
           echo "Invalid target type: ${{ inputs.target }}"
           exit 1
         fi
