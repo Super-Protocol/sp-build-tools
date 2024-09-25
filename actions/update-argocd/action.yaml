@@ -100,7 +100,7 @@ runs:
         yq eval '.config.PROVIDER_OFFERS_JSON' config.yaml > provider-offers-config.json
 
         # get offer id by solution instance fullpath (select block, which should be replaced in JSON config)
-        offer_id=$(jq ".[] | select(.resource.filepath | contains(${{ inputs.solution_name }})) | .id" provider-offers-config.json)
+        offer_id=$(jq ".[] | select(.resource.filepath | contains(\"${{ inputs.solution_name }})\") | .id" provider-offers-config.json)
         if [ -z "$offer_id" ]; then
           echo "Offer id is not found"
           exit 1
