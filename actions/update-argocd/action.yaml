@@ -16,8 +16,7 @@ inputs:
     description: 'File path to resource file created by command "spctl files upload"'
     required: true
   cluster:
-    description: 'Path to cluster in argocd repo'
-    required: true
+    description: 'Path to cluster in argocd repo. If empty will choose by target'
   solution_name:
     description: 'Name of the solution'
     required: true
@@ -43,6 +42,21 @@ runs:
           exit 1
         fi
 
+    - name: Choose cluster
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.cluster }}" ]; then
+          CLUSTER=${{ inputs.cluster }}
+        elif [ "${{ inputs.target }}" != "dev" ]; then
+          CLUSTER=ovh-de-dev/dev
+        elif [ "${{ inputs.target }}" != "stage" ]; then
+          CLUSTER=ovh-stg/stage
+        elif [ "${{ inputs.target }}" != "testnet" ]; then
+          CLUSTER=gcore-testnet/testnet
+        fi
+
+        echo "CLUSTER=$CLUSTER" >> $GITHUB_ENV
+
     - name: Checkout argocd repo
       uses: actions/checkout@v4
       with:
@@ -58,7 +72,7 @@ runs:
       run: |
         WORKDIR=$(pwd)
 
-        DST=$WORKDIR/argo/clusters/${{ inputs.cluster }}
+        DST=$WORKDIR/argo/clusters/$CLUSTER
         JSON=$(cat ${{ inputs.resource_file }})
 
         cp "$DST/execution-controller-${{ inputs.resource_type }}-prov.yml" $WORKDIR/ec.yaml
