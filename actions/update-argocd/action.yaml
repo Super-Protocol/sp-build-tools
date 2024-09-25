@@ -67,6 +67,12 @@ runs:
         repository: super-protocol/argocd-clusters
         token: ${{ inputs.gh_token }}
 
+    - name: Setup yq
+      shell: bash
+      run: |
+        sudo apt update
+        sudo apt install yq -y
+
     - name: Modify cluster files
       shell: bash
       run: |
