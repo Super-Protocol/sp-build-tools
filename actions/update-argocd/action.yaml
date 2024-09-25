@@ -67,12 +67,27 @@ runs:
         repository: super-protocol/argocd-clusters
         token: ${{ inputs.gh_token }}
 
-    - name: Setup yq
-      uses: chrisdickinson/setup-yq@latest
+    - name: Setup yq if needed
+      shell: bash
+      run: |
+        if [[ $(which yq) == "" ]]; then
+          if [[ $(grep -Ei 'debian|ubuntu' /etc/*release) ]]; then
+            sudo add-apt-repository ppa:rmescandon/yq
+            sudo apt update
+            sudo apt install yq -y
+          else
+            echo "yq is not installed and the distribution is not Ubuntu or Debian. Exiting."
+            exit 1
+          fi
+        else
+          echo "yq is already installed."
+        fi
 
     - name: Modify cluster files
       shell: bash
       run: |
+        yq --version
+
         WORKDIR=$(pwd)
 
         DST=$WORKDIR/argo/clusters/$CLUSTER
