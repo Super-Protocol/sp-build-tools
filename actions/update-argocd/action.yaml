@@ -96,8 +96,8 @@ runs:
         cp "$DST/execution-controller-${{ inputs.resource_type }}-prov.yml" $WORKDIR/ec.yaml
 
         # extract helm YAML values from ArgoCD app, and extract provider offers JSON config from YAML helm config
-        cat ec.yaml | yq '.spec.source.helm.values' > config.yaml
-        cat config.yaml | yq '.config.PROVIDER_OFFERS_JSON' > provider-offers-config.json
+        yq eval '.spec.source.helm.values' ec.yaml > config.yaml
+        yq eval '.config.PROVIDER_OFFERS_JSON' config.yaml > provider-offers-config.json
 
         # get offer id by solution instance fullpath (select block, which should be replaced in JSON config)
         offer_id=$(jq ".[] | select(.resource.filepath | contains(${{ inputs.solution_name }})) | .id" provider-offers-config.json)
