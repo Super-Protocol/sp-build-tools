@@ -121,13 +121,13 @@ runs:
     - name: Choose branch
       shell: bash
       run: |
-        if [ "${{ inputs.commit_type }}" == "pull-request'" ]; then
+        if [ "${{ inputs.commit_type }}" == "pull-request" ]; then
           BRANCH_NAME="update-${{ inputs.resource_type }}-${{ inputs.solution_name }}-${{ github.run_id }}-${{ inputs.target }}"
         else
           BRANCH_NAME="main"
         fi
 
-        echo "BRANCH_NAME=$BRANCH_NAME.json" >> $GITHUB_ENV
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
     - name: Make commit
       shell: bash
@@ -160,3 +160,19 @@ runs:
           --title "Update solution ${{ inputs.solution_name }} according to ${{ github.run_id }} (${{ inputs.target }})" \
           --head "$BRANCH_NAME" \
           --base "main")
+
+    - name: Create Pull Request
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.gh_token }}
+        script: |
+          const result = await github.rest.pulls.create({
+            title: 'Update solution ${{ inputs.solution_name }} according to ${{ github.run_id }} (${{ inputs.target }})',
+            owner: 'Super-Protocol',
+            repo: 'argocd-clusters',
+            head: '${{ github.ref_name }}',
+            base: 'main',
+            body: 'Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          });
+
+          console.log(result);
