@@ -68,30 +68,16 @@ runs:
         token: ${{ inputs.gh_token }}
 
     - name: Setup yq if needed
-      shell: bash
-      run: |
-        if [[ $(which yq) == "" ]]; then
-          if [[ $(grep -Ei 'debian|ubuntu' /etc/*release) ]]; then
-            sudo add-apt-repository ppa:rmescandon/yq
-            sudo apt update
-            sudo apt install yq -y
-          else
-            echo "yq is not installed and the distribution is not Ubuntu or Debian. Exiting."
-            exit 1
-          fi
-        else
-          echo "yq is already installed."
-        fi
+      uses: chrisdickinson/setup-yq@latest
 
     - name: Modify cluster files
       shell: bash
       run: |
         yq --version
+        jq --version
 
         WORKDIR=$(pwd)
-
         DST=$WORKDIR/argo/clusters/$CLUSTER
-        JSON=$(cat ${{ inputs.resource_file }})
 
         cp "$DST/execution-controller-${{ inputs.resource_type }}-prov.yml" $WORKDIR/ec.yaml
 
@@ -106,9 +92,9 @@ runs:
           exit 1
         fi
 
-        encryption_block=$(cat provider-offers-config.json | jq ".encryption")
-        resource_block=$(cat provider-offers-config.json | jq ".resource")
-        hash_block=$(cat provider-offers-config.json | jq ".hash")
+        encryption_block=$(cat ${{ inputs.resource_file }} | jq ".encryption")
+        resource_block=$(cat ${{ inputs.resource_file }} | jq ".resource")
+        hash_block=$(cat ${{ inputs.resource_file }} | jq ".hash")
 
         # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
         cat provider-offers-config.json | jq  ".[] | select(.id==$offer_id) |= . + {encryption:$encryption_block}" | jq --slurp '.' >  temp-1.json
