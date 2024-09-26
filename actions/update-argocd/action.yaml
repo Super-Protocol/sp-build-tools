@@ -69,6 +69,8 @@ runs:
 
     - name: Setup yq if needed
       uses: chrisdickinson/setup-yq@latest
+      with:
+        yq-version: 4.16.2
 
     - name: Modify cluster files
       shell: bash
