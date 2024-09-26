@@ -3,15 +3,13 @@ description: Download SPCTL provided version
 
 inputs:
   version:
-    type: string
+    description: spctl version should be downloaded
     default: latest
   repository:
-    type: string
     required: true
-    description: "Specify 'public' or 'private'"
+    description: Specify 'public' or 'private'
   gh_token:
-    type: string
-    description: 'GH token for downloading private SPCTL'
+    description: GH token for downloading private SPCTL
 
 runs:
   using: 'composite'
