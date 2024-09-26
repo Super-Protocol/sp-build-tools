@@ -140,7 +140,7 @@ runs:
 
         # Commit the changes and push the feature branch to origin
         git add .
-        git commit -m "Update ${{ inputs.resource_type }} ${{ inputs.resource_type }} (${{ inputs.target }}) according to ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        git commit -m "Update ${{ inputs.resource_type }} ${{ inputs.solution_name }} (${{ inputs.target }}) according to ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         git push origin $BRANCH_NAME
         last_commit_info=$(git show --oneline -s)
 
