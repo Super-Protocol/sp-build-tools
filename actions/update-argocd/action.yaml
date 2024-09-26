@@ -146,21 +146,6 @@ runs:
 
         echo "::notice:: Created commit: ${{ github.server_url }}/super-protocol/argocd-clusters/commit/$last_commit_info"
 
-    - name: Create PR
-      if: ${{ inputs.commit_type }} == 'pull-request'
-      shell: bash
-      run: |
-        echo "${{ inputs.gh_token }}" > token.txt
-
-        # Authorize GitHub CLI for the current repository and
-        # create a pull-requests containing the updates.
-        gh auth login --with-token < token.txt
-        pr_result=$(gh pr create \
-          --body "Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
-          --title "Update solution ${{ inputs.solution_name }} according to ${{ github.run_id }} (${{ inputs.target }})" \
-          --head "$BRANCH_NAME" \
-          --base "main")
-
     - name: Create Pull Request
       uses: actions/github-script@v7
       with:
