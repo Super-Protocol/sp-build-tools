@@ -3,25 +3,25 @@ description: Update solution or data value in argocd cluster repo
 
 inputs:
   gh_token:
-    description: 'Token for GH argo repository'
+    description: Token for GH argo repository
     required: true
   target:
-    description: 'Specify "develop" or "stage" or "testnet"'
+    description: Specify "develop" or "stage" or "testnet"
     required: true
   resource_type:
-    description: 'Specify "solution" or "data"'
+    description: Specify "solution" or "data"
     required: true
     default: solution
   resource_file:
-    description: 'File path to resource file created by command "spctl files upload"'
+    description: File path to resource file created by command "spctl files upload"
     required: true
   cluster:
-    description: 'Path to cluster in argocd repo. If empty will choose by target'
+    description: Path to cluster in argocd repo. If empty will choose by target
   solution_name:
-    description: 'Name of the solution'
+    description: Name of the solution
     required: true
   commit_type:
-    description: 'Specify "direct-commit" or "pull-request"'
+    description: Specify "direct-commit" or "pull-request"
     required: true
     default: direct-commit
 
