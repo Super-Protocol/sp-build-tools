@@ -104,13 +104,13 @@ runs:
         cat temp-2.json | jq  ".[] | select(.id==$offer_id) |= . + {hash:$hash_block}" | jq --slurp '.' >  provider-offers-config.json
 
         # writing back JSON config into yaml and into the argoCD app helm values
-        yq --inplace '.config.PROVIDER_OFFERS_JSON = load_str("provider-offers-config.json")'  provider-offers-config.yaml
-        yq --inplace '.spec.source.helm.values     = load_str("provider-offers-config.yaml")'  ec.yaml
+        yq --inplace '.config.PROVIDER_OFFERS_JSON = load_str("provider-offers-config.json")'  config.yaml
+        yq --inplace '.spec.source.helm.values     = load_str("config.yaml")'  ec.yaml
 
         # copy changed files into destination repo
         cp ec.yaml $DST/execution-controller-${{ inputs.resource_type }}-prov.yml
         # remove all temporary files
-        rm ec.yaml provider-offers-config.yaml provider-offers-config.json temp-1.json temp-2.json
+        rm ec.yaml config.yaml provider-offers-config.json temp-1.json temp-2.json
 
     - name: Setup the committers identity
       shell: bash
