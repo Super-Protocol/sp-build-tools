@@ -170,7 +170,7 @@ runs:
             title: 'Update solution ${{ inputs.solution_name }} according to ${{ github.run_id }} (${{ inputs.target }})',
             owner: 'Super-Protocol',
             repo: 'argocd-clusters',
-            head: '${{ github.ref_name }}',
+            head: '${{ env.BRANCH_NAME }}',
             base: 'main',
             body: 'Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
           });
