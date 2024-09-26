@@ -1,30 +1,24 @@
 name: Create workflow
+description: Create workflow with spctl tool and return created order numbers
 
 inputs:
   tee_offers:
-    type: string
     description: tee offers separated by comma (eg. 1,3)
     required: true
-  base-image-offer:
-    type: string
+  base_image:
     description: Base image offer number
   solution:
-    type: string
     description: Solution offer number or path to file with solution resource
     required: true
   data:
-    type: string
-    description: Data offer number or path to data resource file
+    description: Data offer number or path to data resource file. If data several, separate by comma (103,./data-settings.json)
     required: true
   storage_offer:
-    type: string
     description: Storage offer number
     required: true
   previous_orders:
-    type: string
     description: Previous order numbers to cancel, separated by comma (eg. 100,102)
   min_rent_minutes:
-    type: string
     description: How long order should run
     default: '129600'
 
@@ -56,12 +50,20 @@ runs:
           fi
         fi
 
-        if [ ! "$(echo ${{ inputs.data }} | grep -E '[0-9]')" ]; then
-          if [ ! -f "${{ inputs.data }}" ]; then
-            echo "Error: File specified by inputs.data does not exist."
-            exit 1
+        # Split inputs.data into an array using a comma as a separator
+        IFS=',' read -ra data_items <<< "${{ inputs.data }}"
+
+        # Loop through each item in the array
+        for item in "${data_items[@]}"; do
+          # Check if the item is a number
+          if ! [[ "$item" =~ ^[0-9]+$ ]]; then
+            # If it's not a number, check if it's a file path and if the file exists
+            if [ ! -f "$item" ]; then
+              echo "Error: File specified by inputs.data ($item) does not exist."
+              exit 1
+            fi
           fi
-        fi
+        done
 
     - name: Cancel previous orders
       shell: bash
@@ -90,7 +92,18 @@ runs:
             COMMAND="$COMMAND --solution ${{ inputs.base_image }}"
           fi
 
-          COMMAND="$COMMAND --solution ${{ inputs.solution }} --data ${{ inputs.data }} --storage ${{ inputs.storage_offer }} --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} > workflow_result.txt"
+          COMMAND="$COMMAND --solution ${{ inputs.solution }}"
+
+          # Split inputs.data into an array using a comma as a separator
+          IFS=',' read -ra data_items <<< "${{ inputs.data }}"
+
+          # Loop through each item in the array
+          for item in "${data_items[@]}"; do
+            # Append "--data $item" to the COMMAND variable for both numbers and file paths
+            COMMAND="$COMMAND --data $item"
+          done
+
+          COMMAND="$COMMAND --storage ${{ inputs.storage_offer }} --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} > workflow_result.txt"
 
           echo "COMMAND=$COMMAND"
 
