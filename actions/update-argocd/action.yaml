@@ -47,11 +47,11 @@ runs:
       run: |
         if [ -n "${{ inputs.cluster }}" ]; then
           CLUSTER=${{ inputs.cluster }}
-        elif [ "${{ inputs.target }}" != "dev" ]; then
+        elif [ "${{ inputs.target }}" == "develop" ]; then
           CLUSTER=ovh-de-dev/dev
-        elif [ "${{ inputs.target }}" != "stage" ]; then
+        elif [ "${{ inputs.target }}" == "stage" ]; then
           CLUSTER=ovh-stg/stage
-        elif [ "${{ inputs.target }}" != "testnet" ]; then
+        elif [ "${{ inputs.target }}" == "testnet" ]; then
           CLUSTER=gcore-testnet/testnet
         fi
 
@@ -81,11 +81,30 @@ runs:
         WORKDIR=$(pwd)
         DST=$WORKDIR/argo/clusters/$CLUSTER
 
-        cp "$DST/execution-controller-${{ inputs.resource_type }}-prov.yml" $WORKDIR/ec.yaml
+        FILE="$DST/execution-controller-${{ inputs.resource_type }}-prov.yml"
+        if [[ -f $FILE ]]; then
+          cp $FILE $WORKDIR/ec.yaml
+        else
+          echo "File $FILE does not exist"
+          exit 1
+        fi
 
         # extract helm YAML values from ArgoCD app, and extract provider offers JSON config from YAML helm config
-        yq eval '.spec.source.helm.values' ec.yaml > config.yaml
-        yq eval '.config.PROVIDER_OFFERS_JSON' config.yaml > provider-offers-config.json
+        RESULT=$(yq eval '.spec.source.helm.values' ec.yaml)
+        if [[ -z "$RESULT" ]]; then
+          echo "The evaluation result of key .spec.source.helm.values is empty"
+          exit 1
+        else
+          echo "$RESULT" > config.yaml
+        fi
+
+        RESULT=$(yq eval '.config.PROVIDER_OFFERS_JSON' config.yaml)
+        if [[ -z "$RESULT" ]]; then
+          echo "The evaluation result of key .config.PROVIDER_OFFERS_JSON is empty"
+          exit 1
+        else
+          echo "$RESULT" > provider-offers-config.json
+        fi
 
         # get offer id by solution instance fullpath (select block, which should be replaced in JSON config)
         offer_id=$(jq ".[] | select(.resource.filepath | contains(\"${{ inputs.solution_name }}\")) | .id" provider-offers-config.json)
@@ -94,9 +113,10 @@ runs:
           exit 1
         fi
 
-        encryption_block=$(cat ${{ inputs.resource_file }} | jq ".encryption")
-        resource_block=$(cat ${{ inputs.resource_file }} | jq ".resource")
-        hash_block=$(cat ${{ inputs.resource_file }} | jq ".hash")
+        json_content=$(cat ${{ inputs.resource_file }})
+        encryption_block=$(echo "$json_content" | jq ".encryption")
+        resource_block=$(echo "$json_content" | jq ".resource")
+        hash_block=$(echo "$json_content" | jq ".hash")
 
         # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
         cat provider-offers-config.json | jq  ".[] | select(.id==$offer_id) |= . + {encryption:$encryption_block}" | jq --slurp '.' >  temp-1.json
