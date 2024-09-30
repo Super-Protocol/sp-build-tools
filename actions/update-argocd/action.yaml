@@ -1,0 +1,183 @@
+name: Update argocd-clusters
+description: Update solution or data value in argocd cluster repo
+
+inputs:
+  gh_token:
+    description: Token for GH argo repository
+    required: true
+  target:
+    description: Specify "develop" or "stage" or "testnet"
+    required: true
+  resource_type:
+    description: Specify "solution" or "data"
+    required: true
+    default: solution
+  resource_file:
+    description: File path to resource file created by command "spctl files upload"
+    required: true
+  cluster:
+    description: Path to cluster in argocd repo. If empty will choose by target
+  solution_name:
+    description: Name of the solution
+    required: true
+  commit_type:
+    description: Specify "direct-commit" or "pull-request"
+    required: true
+    default: direct-commit
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate repository input
+      shell: bash
+      run: |
+        if [ "${{ inputs.resource_type }}" != "solution" ] && [ "${{ inputs.resource_type }}" != "data" ]; then
+          echo "Invalid resource type: ${{ inputs.resource_type }}"
+          exit 1
+        elif [ "${{ inputs.commit_type }}" != "direct-commit" ] && [ "${{ inputs.commit_type }}" != "pull-request" ]; then
+          echo "Invalid commit type: ${{ inputs.commit_type }}"
+          exit 1
+        elif [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
+          echo "Invalid target type: ${{ inputs.target }}"
+          exit 1
+        fi
+
+    - name: Choose cluster
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.cluster }}" ]; then
+          CLUSTER=${{ inputs.cluster }}
+        elif [ "${{ inputs.target }}" == "develop" ]; then
+          CLUSTER=ovh-de-dev/dev
+        elif [ "${{ inputs.target }}" == "stage" ]; then
+          CLUSTER=ovh-stg/stage
+        elif [ "${{ inputs.target }}" == "testnet" ]; then
+          CLUSTER=gcore-testnet/testnet
+        fi
+
+        echo "CLUSTER=$CLUSTER" >> $GITHUB_ENV
+
+    - name: Checkout argocd repo
+      uses: actions/checkout@v4
+      with:
+        path: 'argo'
+        ref: 'main'
+        persist-credentials: true
+        fetch-depth: 1
+        repository: super-protocol/argocd-clusters
+        token: ${{ inputs.gh_token }}
+
+    - name: Setup yq if needed
+      uses: chrisdickinson/setup-yq@latest
+      with:
+        yq-version: v4.44.3
+
+    - name: Modify cluster files
+      shell: bash
+      run: |
+        yq --version
+        jq --version
+
+        WORKDIR=$(pwd)
+        DST=$WORKDIR/argo/clusters/$CLUSTER
+
+        FILE="$DST/execution-controller-${{ inputs.resource_type }}-prov.yml"
+        if [[ -f $FILE ]]; then
+          cp $FILE $WORKDIR/ec.yaml
+        else
+          echo "File $FILE does not exist"
+          exit 1
+        fi
+
+        # extract helm YAML values from ArgoCD app, and extract provider offers JSON config from YAML helm config
+        RESULT=$(yq eval '.spec.source.helm.values' ec.yaml)
+        if [[ -z "$RESULT" ]]; then
+          echo "The evaluation result of key .spec.source.helm.values is empty"
+          exit 1
+        else
+          echo "$RESULT" > config.yaml
+        fi
+
+        RESULT=$(yq eval '.config.PROVIDER_OFFERS_JSON' config.yaml)
+        if [[ -z "$RESULT" ]]; then
+          echo "The evaluation result of key .config.PROVIDER_OFFERS_JSON is empty"
+          exit 1
+        else
+          echo "$RESULT" > provider-offers-config.json
+        fi
+
+        # get offer id by solution instance fullpath (select block, which should be replaced in JSON config)
+        offer_id=$(jq ".[] | select(.resource.filepath | contains(\"${{ inputs.solution_name }}\")) | .id" provider-offers-config.json)
+        if [ -z "$offer_id" ]; then
+          echo "Offer id is not found"
+          exit 1
+        fi
+
+        json_content=$(cat ${{ inputs.resource_file }})
+        encryption_block=$(echo "$json_content" | jq ".encryption")
+        resource_block=$(echo "$json_content" | jq ".resource")
+        hash_block=$(echo "$json_content" | jq ".hash")
+
+        # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
+        cat provider-offers-config.json | jq  ".[] | select(.id==$offer_id) |= . + {encryption:$encryption_block}" | jq --slurp '.' >  temp-1.json
+        cat temp-1.json | jq  ".[] | select(.id==$offer_id) |= . + {resource:$resource_block}" | jq --slurp '.' >  temp-2.json
+        cat temp-2.json | jq  ".[] | select(.id==$offer_id) |= . + {hash:$hash_block}" | jq --slurp '.' >  provider-offers-config.json
+
+        # writing back JSON config into yaml and into the argoCD app helm values
+        yq --inplace '.config.PROVIDER_OFFERS_JSON = load_str("provider-offers-config.json")'  config.yaml
+        yq --inplace '.spec.source.helm.values     = load_str("config.yaml")'  ec.yaml
+
+        # copy changed files into destination repo
+        cp ec.yaml $DST/execution-controller-${{ inputs.resource_type }}-prov.yml
+        # remove all temporary files
+        rm ec.yaml config.yaml provider-offers-config.json temp-1.json temp-2.json
+
+    - name: Setup the committers identity
+      shell: bash
+      run: |
+        git config user.email "github@superprotocol.com"
+        git config user.name "GitHub Super Bot"
+
+    - name: Choose branch
+      shell: bash
+      run: |
+        if [ "${{ inputs.commit_type }}" == "pull-request" ]; then
+          BRANCH_NAME="update-${{ inputs.resource_type }}-${{ inputs.solution_name }}-${{ github.run_id }}-${{ inputs.target }}"
+        else
+          BRANCH_NAME="main"
+        fi
+
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+    - name: Make commit
+      shell: bash
+      run: |
+        cd argo
+        LATEST_TAG=$(git describe --tags --always --abbrev=0)
+
+        # Create a new feature branch for the changes.
+        git checkout -b $BRANCH_NAME
+
+        # Commit the changes and push the feature branch to origin
+        git add .
+        git commit -m "Update ${{ inputs.resource_type }} ${{ inputs.solution_name }} (${{ inputs.target }}) according to ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        git push origin $BRANCH_NAME
+        last_commit_info=$(git show --oneline -s)
+
+        echo "::notice:: Created commit: ${{ github.server_url }}/super-protocol/argocd-clusters/commit/$last_commit_info"
+
+    - name: Create Pull Request
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ inputs.gh_token }}
+        script: |
+          const result = await github.rest.pulls.create({
+            title: 'Update solution ${{ inputs.solution_name }} according to ${{ github.run_id }} (${{ inputs.target }})',
+            owner: 'Super-Protocol',
+            repo: 'argocd-clusters',
+            head: '${{ env.BRANCH_NAME }}',
+            base: 'main',
+            body: 'Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+          });
+
+          console.log(result);
