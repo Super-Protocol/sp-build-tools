@@ -126,8 +126,8 @@ runs:
           "authToken": "${{ inputs.auth_token }}",
           "site": {
             "domain": "${{ inputs.domain }}",
-            "cert": "./${{ inputs.ssl_key_file }}",
-            "key": "./${{ inputs.ssl_certificate_file }}"
+            "key": "./${{ inputs.ssl_key_file }}",
+            "cert": "./${{ inputs.ssl_certificate_file }}"
           }
         }
         EOF
