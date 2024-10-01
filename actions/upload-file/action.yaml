@@ -28,8 +28,10 @@ runs:
     - name: Prepare working directory
       shell: bash
       run: |
-        echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}/upload-files-data" >> $GITHUB_ENV
+        WORKDIR=$RUNNER_TEMP/${{ github.run_id }}/upload-files-data
         mkdir -p $WORKDIR
+
+        echo "WORKDIR=$WORKDIR" >> $GITHUB_ENV
 
     - name: Upload file
       id: upload-file
