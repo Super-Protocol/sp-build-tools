@@ -1,0 +1,86 @@
+name: Run tunnel server
+description: Run tunnel server workflows and return order numbers
+
+inputs:
+  tee_offers:
+    description: Tee offers separated by comma (eg. 1,3)
+    required: true
+  target:
+    description: Specify "develop" "stage" or "testnet"
+    required: true
+    default: testnet
+  previous_orders:
+    description: Previous order numbers to cancel, separated by comma (eg. 100,102)
+  min_rent_minutes:
+    description: How long order should run
+  auth_token:
+    description: The authentication token used by the tunnel server to identify tunnel clients
+    required: true
+
+outputs:
+  order_ids:
+    description: Created tunnel server order ids
+    value: ${{ steps.create-workflows.outputs.order_ids }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check spctl
+      uses: Super-Protocol/sp-build-tools/actions/check-spctl@start-tunnel-actions
+
+    - name: Check and prepare variables
+      shell: bash
+      run: |
+        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
+          echo "Invalid target type: ${{ inputs.target }}"
+          exit 1
+        fi
+
+    - name: Set offers by target
+      shell: bash
+      run: |
+        if [ "${{ inputs.resource_type }}" == "develop" ]; then
+          BASE_IMAGE_OFFER=6
+          TUNNEL_SERVER_OFFER=11
+          STORAGE_OFFER=25
+        elif [ "${{ inputs.resource_type }}" == "stage" ]; then
+          BASE_IMAGE_OFFER=3
+          TUNNEL_SERVER_OFFER=8
+          STORAGE_OFFER=22
+        elif [ "${{ inputs.resource_type }}" == "testnet" ]; then
+          BASE_IMAGE_OFFER=6
+          TUNNEL_SERVER_OFFER=11
+          STORAGE_OFFER=25
+        fi
+
+        echo "BASE_IMAGE_OFFER=$BASE_IMAGE_OFFER" >> $GITHUB_ENV
+        echo "TUNNEL_SERVER_OFFER=$TUNNEL_SERVER_OFFER" >> $GITHUB_ENV
+        echo "STORAGE_OFFER=$STORAGE_OFFER" >> $GITHUB_ENV
+
+    - name: Prepare work directory
+      shell: bash
+      run: |
+        echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}" >> $GITHUB_ENV
+
+    - name: Prepare tunnel server data
+      shell: bash
+      run: |
+        mkdir $WORKDIR/solution-data
+        echo "${{ inputs.auth_token }}" > $WORKDIR/solution-data/auth-token
+        DATA_FILE=tunnel-server-data-b${{ github.run_id }}
+        tar -czf $WORKDIR/$DATA_FILE.tar.gz -C $WORKDIR/solution-data/ .
+        ./spctl files upload $WORKDIR/$DATA_FILE.tar.gz --output $WORKDIR/$DATA_FILE.json --filename $DATA_FILE.tar.gz
+
+        echo DATA_FILE=$WORKDIR/$DATA_FILE.json" >> $GITHUB_ENV
+
+    - name: Create tunnel-server-order workflows
+      id: create-workflows
+      uses: Super-Protocol/sp-build-tools/actions/create-workflows@start-tunnel-actions
+      with:
+        tee_offers: ${{ inputs.tee_offers }}
+        base_image: ${{ env.BASE_IMAGE_OFFER }}
+        solution: ${{ env.TUNNEL_SERVER_OFFER }}
+        data: ${{ env.DATA_FILE }}
+        storage_offer: ${{ env.STORAGE_OFFER }}
+        previous_orders: ${{ inputs.previous_orders }}
+        min_rent_minutes: ${{ inputs.min_rent_minutes }}

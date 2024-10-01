@@ -30,19 +30,12 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Check SPCTL and validate input
+    - name: Check spctl
+      uses: Super-Protocol/sp-build-tools/actions/check-spctl@start-tunnel-actions
+
+    - name: Validate input
       shell: bash
       run: |
-        if [ ! -f "./spctl" ]; then
-          echo "Error: spctl file is missing."
-          exit 1
-        fi
-
-        if [ ! -f "./config.json" ]; then
-          echo "Error: config.json file is missing."
-          exit 1
-        fi
-
         if [ ! "$(echo ${{ inputs.solution }} | grep -E '[0-9]')" ]; then
           if [ ! -f "${{ inputs.solution }}" ]; then
             echo "Error: File specified by inputs.solution does not exist."

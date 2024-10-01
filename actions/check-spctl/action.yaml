@@ -1,0 +1,23 @@
+name: Check spctl
+description: Check if spctl installation and configuration correct
+
+runs:
+  using: composite
+  steps:
+    - name: Check files
+      shell: bash
+      run: |
+        if [ ! -f "./spctl" ]; then
+          echo "Error: spctl file is missing. Use download-spctl action first"
+          exit 1
+        fi
+
+        if [ ! -f "./config.json" ]; then
+          echo "Error: config.json file is missing."
+          exit 1
+        fi
+
+    - name: Print version
+      shell: bash
+      run: |
+        timeout 10s ./spctl --version || { echo "Wrong spctl config"; exit 1; }
