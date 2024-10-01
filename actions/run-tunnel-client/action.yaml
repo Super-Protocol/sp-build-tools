@@ -68,7 +68,7 @@ runs:
           exit 1
         fi
 
-        if [ -n "${{ inputs.content_folder }}" ] && [ ! -f "${{ inputs.content_folder }}" ]; then
+        if [ -n "${{ inputs.content_folder }}" ] && [ ! -d "${{ inputs.content_folder }}" ]; then
           echo "Error: Folder specified by inputs.content_folder (${{ inputs.content_folder }}) does not exist."
           exit 1
         fi
