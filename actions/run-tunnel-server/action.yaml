@@ -56,21 +56,26 @@ runs:
         echo "TUNNEL_SERVER_OFFER=$TUNNEL_SERVER_OFFER" >> $GITHUB_ENV
         echo "STORAGE_OFFER=$STORAGE_OFFER" >> $GITHUB_ENV
 
-    - name: Prepare work directory
+    - name: Prepare working directory
       shell: bash
       run: |
-        echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}" >> $GITHUB_ENV
-        mkdir -p $WORKDIR/solution-data
+        echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}/tunnel-server-data" >> $GITHUB_ENV
+        mkdir -p $WORKDIR/archive
 
     - name: Prepare tunnel server data
       shell: bash
       run: |
-        echo "${{ inputs.auth_token }}" > $WORKDIR/solution-data/auth-token
-        DATA_FILE=tunnel-server-data-b${{ github.run_id }}
-        tar -czf $WORKDIR/$DATA_FILE.tar.gz -C $WORKDIR/solution-data/ .
-        ./spctl files upload $WORKDIR/$DATA_FILE.tar.gz --output $WORKDIR/$DATA_FILE.json --filename $DATA_FILE.tar.gz
+        echo "${{ inputs.auth_token }}" > $WORKDIR/archive/auth-token
+        DATA_FILE=$WORKDIR/tunnel-server-data-b${{ github.run_id }}.tar.gz
+        tar -czf $DATA_FILE -C $WORKDIR/archive/ .
 
-        echo "DATA_FILE=$WORKDIR/$DATA_FILE.json" >> $GITHUB_ENV
+        echo "DATA_FILE=$DATA_FILE" >> $GITHUB_ENV
+
+    - name: Upload data file
+      id: upload-data-file
+      uses: Super-Protocol/sp-build-tools/actions/upload-file@start-tunnels-actions
+      with:
+        file_to_upload: ${{ env.DATA_FILE }}
 
     - name: Create tunnel-server-order workflows
       id: create-workflows
@@ -79,7 +84,7 @@ runs:
         tee_offers: ${{ inputs.tee_offers }}
         base_image: ${{ env.BASE_IMAGE_OFFER }}
         solution: ${{ env.TUNNEL_SERVER_OFFER }}
-        data: ${{ env.DATA_FILE }}
+        data: ${{ steps.upload-data-file.outputs.resource }}
         storage_offer: ${{ env.STORAGE_OFFER }}
         previous_orders: ${{ inputs.previous_orders }}
         min_rent_minutes: ${{ inputs.min_rent_minutes }}

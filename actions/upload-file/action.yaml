@@ -1,0 +1,42 @@
+name: Upload file
+description: Upload file by spctl and return path to resource
+
+inputs:
+  file_to_upload:
+    description: File path that should be uploaded
+    required: true
+
+outputs:
+  resource:
+    description: File path with uploaded resource
+    value: ${{ steps.upload-file.outputs.resource }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check spctl
+      uses: Super-Protocol/sp-build-tools/actions/check-spctl@start-tunnels-actions
+
+    - name: Validate input
+      shell: bash
+      run: |
+        if [ ! -f "${{ inputs.file_to_upload }}" ]; then
+          echo "Error: File specified by inputs.file_to_upload (${{ inputs.file_to_upload }}) does not exist."
+          exit 1
+        fi
+
+    - name: Prepare working directory
+      shell: bash
+      run: |
+        echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}/upload-files-data" >> $GITHUB_ENV
+        mkdir -p $WORKDIR
+
+    - name: Upload file
+      id: upload-file
+      shell: bash
+      run: |
+        RESOURCE_FILE_NAME="uploaded-file-$(date +%s).json"
+        ./spctl files upload ${{ inputs.file_to_upload }} --output $WORKDIR/$RESOURCE_FILE_NAME --filename ${{ inputs.file_to_upload }}
+        cat $WORKDIR/$RESOURCE_FILE_NAME
+
+        echo "resource=$WORKDIR/$RESOURCE_FILE_NAME" >> $GITHUB_OUTPUT

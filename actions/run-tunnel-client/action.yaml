@@ -101,17 +101,17 @@ runs:
         echo "TUNNEL_CLIENT_OFFER=$TUNNEL_CLIENT_OFFER" >> $GITHUB_ENV
         echo "STORAGE_OFFER=$STORAGE_OFFER" >> $GITHUB_ENV
 
-    - name: Prepare work directory
+    - name: Prepare working directory
       shell: bash
       run: |
-        echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}" >> $GITHUB_ENV
-        mkdir -p $WORKDIR/solution-data
+        echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}/tunnel-client-data" >> $GITHUB_ENV
+        mkdir -p $WORKDIR/archive
 
     - name: Prepare tunnel client data
       shell: bash
       run: |
-        cp ${{ inputs.ssl_key_file }} $WORKDIR/solution-data/
-        cp ${{ inputs.ssl_certificate_file }} $WORKDIR/solution-data/
+        cp ${{ inputs.ssl_key_file }} $WORKDIR/archive
+        cp ${{ inputs.ssl_certificate_file }} $WORKDIR/archive
 
         CONFIG=$(cat << EOF
         {
@@ -130,21 +130,32 @@ runs:
         }
         EOF
         )
-        echo "$CONFIG" > $WORKDIR/solution-data/config.json
+        echo "$CONFIG" > $WORKDIR/archive/config.json
 
         if [ -n "${{ inputs.content_folder }}" ]; then
-          cp -r ${{ inputs.content_folder }} $WORKDIR/solution-data/content
+          cp -r ${{ inputs.content_folder }} $WORKDIR/archive/content
         fi
 
-        DATA_FILE=tunnel-client-data-b${{ github.run_id }}
-        tar -czf $WORKDIR/$DATA_FILE.tar.gz -C $WORKDIR/solution-data/ .
-        ./spctl files upload $WORKDIR/$DATA_FILE.tar.gz --output $WORKDIR/$DATA_FILE.json --filename $DATA_FILE.tar.gz
+        DATA_FILE=$WORKDIR/tunnel-client-data-b${{ github.run_id }}.tar.gz
+        tar -czf $DATA_FILE -C $WORKDIR/archive/ .
 
+        echo "DATA_FILE=$DATA_FILE" >> $GITHUB_ENV
+
+    - name: Upload data file
+      id: upload-data-file
+      uses: Super-Protocol/sp-build-tools/actions/upload-file@start-tunnels-actions
+      with:
+        file_to_upload: ${{ env.DATA_FILE }}
+
+    - name: Prepare data for workflow create
+      shell: bash
+      run: |
+        DATA=${{ steps.upload-data-file.outputs.resource }}
         if [ -n "${{ inputs.data }}" ]; then
-          echo "DATA=$WORKDIR/$DATA_FILE.json,${{ inputs.data }}" >> $GITHUB_ENV
-        else 
-          echo "DATA=$WORKDIR/$DATA_FILE.json" >> $GITHUB_ENV  
+         DATA="$DATA,${{ inputs.data }}"
         fi
+
+        echo "DATA=$DATA" >> $GITHUB_ENV
 
     - name: Create tunnel-server-order workflows
       id: create-workflows
