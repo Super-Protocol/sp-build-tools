@@ -26,7 +26,7 @@ runs:
   using: composite
   steps:
     - name: Check spctl
-      uses: Super-Protocol/sp-build-tools/actions/check-spctl@start-tunnel-actions
+      uses: Super-Protocol/sp-build-tools/actions/check-spctl@start-tunnels-actions
 
     - name: Check and prepare variables
       shell: bash
@@ -75,7 +75,7 @@ runs:
 
     - name: Create tunnel-server-order workflows
       id: create-workflows
-      uses: Super-Protocol/sp-build-tools/actions/create-workflows@start-tunnel-actions
+      uses: Super-Protocol/sp-build-tools/actions/create-workflows@start-tunnels-actions
       with:
         tee_offers: ${{ inputs.tee_offers }}
         base_image: ${{ env.BASE_IMAGE_OFFER }}
