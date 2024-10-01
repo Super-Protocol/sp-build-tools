@@ -1,5 +1,5 @@
 name: Run tunnel server
-description: Run tunnel server workflows and return order numbers
+description: Run tunnel server solution and return order numbers
 
 inputs:
   tee_offers:
@@ -8,7 +8,6 @@ inputs:
   target:
     description: Specify "develop" "stage" or "testnet"
     required: true
-    default: testnet
   previous_orders:
     description: Previous order numbers to cancel, separated by comma (eg. 100,102)
   min_rent_minutes:
@@ -28,7 +27,7 @@ runs:
     - name: Check spctl
       uses: Super-Protocol/sp-build-tools/actions/check-spctl@start-tunnels-actions
 
-    - name: Check and prepare variables
+    - name: Check variables
       shell: bash
       run: |
         if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
@@ -61,11 +60,11 @@ runs:
       shell: bash
       run: |
         echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}" >> $GITHUB_ENV
+        mkdir -p $WORKDIR/solution-data
 
     - name: Prepare tunnel server data
       shell: bash
       run: |
-        mkdir -p $WORKDIR/solution-data
         echo "${{ inputs.auth_token }}" > $WORKDIR/solution-data/auth-token
         DATA_FILE=tunnel-server-data-b${{ github.run_id }}
         tar -czf $WORKDIR/$DATA_FILE.tar.gz -C $WORKDIR/solution-data/ .

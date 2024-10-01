@@ -1,0 +1,147 @@
+name: Run tunnel client NodeJs
+description: Run tunnel client NodeJs solution and return order numbers
+
+inputs:
+  tee_offers:
+    description: Tee offers separated by comma (eg. 1,3)
+    required: true
+  target:
+    description: Specify "develop" "stage" or "testnet"
+    required: true
+  previous_orders:
+    description: Previous order numbers to cancel, separated by comma (eg. 100,102)
+  min_rent_minutes:
+    description: How long order should run
+  auth_token:
+    description: The authentication token used by the tunnel server to identify tunnel clients
+    required: true
+  tunnel_server_mrenclave:
+    description: mrEnclave of tunnel server solution that tunnel client trusts to
+    required: true
+  tunnel_server_mrsigner:
+    description: mrSigner of tunnel server solution that tunnel client trusts to
+    required: true
+  ssl_key_file:
+    description: Path to file with SSL PEM key file
+    required: true
+  ssl_certificate_file:
+    description: Path to file with SSL PEM certificate chain
+    required: true
+  domain:
+    description: Domain which will be used in order in case of provided wildcard certificate
+  content_folder:
+    description: Path to content folder. If not provided content should be provided in input_file
+  data:
+    description: Path to additional input resource files or data offers, separated by comma. Will be used with --data option on "spctl workflow create command"
+
+outputs:
+  order_ids:
+    description: Created tunnel server order ids
+    value: ${{ steps.create-workflows.outputs.order_ids }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check spctl
+      uses: Super-Protocol/sp-build-tools/actions/check-spctl@start-tunnels-actions
+
+    - name: Check variables
+      shell: bash
+      run: |
+        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
+          echo "Invalid target type: ${{ inputs.target }}"
+          exit 1
+        fi
+
+        if [ ! -f "${{ inputs.ssl_key_file }}" ]; then
+          echo "Error: File specified by inputs.ssl_key_file (${{ inputs.ssl_key_file }}) does not exist."
+          exit 1
+        fi
+
+        if [ ! -f "${{ inputs.ssl_certificate_file }}" ]; then
+          echo "Error: File specified by inputs.ssl_certificate_file (${{ inputs.ssl_certificate_file }}) does not exist."
+          exit 1
+        fi
+
+        if [ -n "${{ inputs.content_folder }}" ] && [ ! -f "${{ inputs.content_folder }}" ]; then
+          echo "Error: Folder specified by inputs.content_folder (${{ inputs.content_folder }}) does not exist."
+          exit 1
+        fi
+
+    - name: Set offers by target
+      shell: bash
+      run: |
+        if [ "${{ inputs.target }}" == "develop" ]; then
+          BASE_IMAGE_OFFER=6
+          TUNNEL_CLIENT_OFFER=13
+          STORAGE_OFFER=25
+        elif [ "${{ inputs.target }}" == "stage" ]; then
+          BASE_IMAGE_OFFER=3
+          TUNNEL_CLIENT_OFFER=10
+          STORAGE_OFFER=22
+        elif [ "${{ inputs.target }}" == "testnet" ]; then
+          BASE_IMAGE_OFFER=6
+          TUNNEL_CLIENT_OFFER=13
+          STORAGE_OFFER=25
+        fi
+
+        echo "BASE_IMAGE_OFFER=$BASE_IMAGE_OFFER" >> $GITHUB_ENV
+        echo "TUNNEL_CLIENT_OFFER=$TUNNEL_CLIENT_OFFER" >> $GITHUB_ENV
+        echo "STORAGE_OFFER=$STORAGE_OFFER" >> $GITHUB_ENV
+
+    - name: Prepare work directory
+      shell: bash
+      run: |
+        echo "WORKDIR=$RUNNER_TEMP/${{ github.run_id }}" >> $GITHUB_ENV
+        mkdir -p $WORKDIR/solution-data
+
+    - name: Prepare tunnel client data
+      shell: bash
+      run: |
+        cp ${{ inputs.ssl_key_file }} $WORKDIR/solution-data/
+        cp ${{ inputs.ssl_certificate_file }} $WORKDIR/solution-data/
+
+        CONFIG=$(cat << EOF
+        {
+          "tunnels": [
+            {
+              "sgxMrEnclave": "${{ inputs.tunnel_server_mrenclave }}",
+              "sgxMrSigner": "${{ inputs.tunnel_server_mrsigner }}"
+            }
+          ],
+          "authToken": "${{ inputs.auth_token }}",
+          "site": {
+            "domain": "${{ inputs.domain }}",
+            "cert": "./${{ inputs.ssl_key_file }}",
+            "key": "./${{ inputs.ssl_certificate_file }}"
+          }
+        }
+        EOF
+        )
+        echo "$CONFIG" > $WORKDIR/solution-data/config.json
+
+        if [ -n "${{ inputs.content_folder }}" ]; then
+          cp -r ${{ inputs.content_folder }} $WORKDIR/solution-data/content
+        fi
+
+        DATA_FILE=tunnel-client-data-b${{ github.run_id }}
+        tar -czf $WORKDIR/$DATA_FILE.tar.gz -C $WORKDIR/solution-data/ .
+        ./spctl files upload $WORKDIR/$DATA_FILE.tar.gz --output $WORKDIR/$DATA_FILE.json --filename $DATA_FILE.tar.gz
+
+        if [ -n "${{ inputs.data }}" ]; then
+          echo "DATA=$WORKDIR/$DATA_FILE.json,${{ inputs.data }}" >> $GITHUB_ENV
+        else 
+          echo "DATA=$WORKDIR/$DATA_FILE.json" >> $GITHUB_ENV  
+        fi
+
+    - name: Create tunnel-server-order workflows
+      id: create-workflows
+      uses: Super-Protocol/sp-build-tools/actions/create-workflows@start-tunnels-actions
+      with:
+        tee_offers: ${{ inputs.tee_offers }}
+        base_image: ${{ env.BASE_IMAGE_OFFER }}
+        solution: ${{ env.TUNNEL_CLIENT_OFFER }}
+        data: ${{ env.DATA }}
+        storage_offer: ${{ env.STORAGE_OFFER }}
+        previous_orders: ${{ inputs.previous_orders }}
+        min_rent_minutes: ${{ inputs.min_rent_minutes }}
