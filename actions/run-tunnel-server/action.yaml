@@ -65,7 +65,7 @@ runs:
     - name: Prepare tunnel server data
       shell: bash
       run: |
-        mkdir $WORKDIR/solution-data
+        mkdir -p $WORKDIR/solution-data
         echo "${{ inputs.auth_token }}" > $WORKDIR/solution-data/auth-token
         DATA_FILE=tunnel-server-data-b${{ github.run_id }}
         tar -czf $WORKDIR/$DATA_FILE.tar.gz -C $WORKDIR/solution-data/ .
