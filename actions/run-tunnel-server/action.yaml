@@ -71,7 +71,7 @@ runs:
         tar -czf $WORKDIR/$DATA_FILE.tar.gz -C $WORKDIR/solution-data/ .
         ./spctl files upload $WORKDIR/$DATA_FILE.tar.gz --output $WORKDIR/$DATA_FILE.json --filename $DATA_FILE.tar.gz
 
-        echo DATA_FILE=$WORKDIR/$DATA_FILE.json" >> $GITHUB_ENV
+        echo "DATA_FILE=$WORKDIR/$DATA_FILE.json" >> $GITHUB_ENV
 
     - name: Create tunnel-server-order workflows
       id: create-workflows
