@@ -38,7 +38,7 @@ runs:
       shell: bash
       run: |
         RESOURCE_FILE_NAME="uploaded-file-$(date +%s).json"
-        ./spctl files upload ${{ inputs.file_to_upload }} --output $WORKDIR/$RESOURCE_FILE_NAME --filename ${{ inputs.file_to_upload }}
+        ./spctl files upload ${{ inputs.file_to_upload }} --output $WORKDIR/$RESOURCE_FILE_NAME --filename $(basename "${{ inputs.file_to_upload }}") 
         cat $WORKDIR/$RESOURCE_FILE_NAME
 
         echo "resource=$WORKDIR/$RESOURCE_FILE_NAME" >> $GITHUB_OUTPUT
