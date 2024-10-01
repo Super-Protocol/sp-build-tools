@@ -1,10 +1,15 @@
-name: Run tunnel client NodeJs
-description: Run tunnel client NodeJs solution and return order numbers
+name: Run tunnel client
+description: Run tunnel client solution and return order numbers
 
 inputs:
   tee_offers:
     description: Tee offers separated by comma (eg. 1,3)
     required: true
+  tunnel_client:
+    description: Recourse or offer id of tunnel client solution
+    required: true
+  use_base_image:
+    description: Should use NodeJs base image solution on workflow creation. Specify "true" if needed
   target:
     description: Specify "develop" "stage" or "testnet"
     required: true
@@ -72,18 +77,25 @@ runs:
       shell: bash
       run: |
         if [ "${{ inputs.target }}" == "develop" ]; then
-          BASE_IMAGE_OFFER=6
+          if [ -n "${{ inputs.use_base_image }}" ]; then
+            BASE_IMAGE_OFFER=6
+          fi
           TUNNEL_CLIENT_OFFER=13
           STORAGE_OFFER=25
         elif [ "${{ inputs.target }}" == "stage" ]; then
-          BASE_IMAGE_OFFER=3
+          if [ -n "${{ inputs.use_base_image }}" ]; then
+            BASE_IMAGE_OFFER=3
+          fi
           TUNNEL_CLIENT_OFFER=10
           STORAGE_OFFER=22
         elif [ "${{ inputs.target }}" == "testnet" ]; then
-          BASE_IMAGE_OFFER=6
+          if [ -n "${{ inputs.use_base_image }}" ]; then
+            BASE_IMAGE_OFFER=6
+          fi
           TUNNEL_CLIENT_OFFER=13
           STORAGE_OFFER=25
         fi
+
 
         echo "BASE_IMAGE_OFFER=$BASE_IMAGE_OFFER" >> $GITHUB_ENV
         echo "TUNNEL_CLIENT_OFFER=$TUNNEL_CLIENT_OFFER" >> $GITHUB_ENV
