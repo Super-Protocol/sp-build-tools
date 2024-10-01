@@ -39,15 +39,15 @@ runs:
     - name: Set offers by target
       shell: bash
       run: |
-        if [ "${{ inputs.resource_type }}" == "develop" ]; then
+        if [ "${{ inputs.target }}" == "develop" ]; then
           BASE_IMAGE_OFFER=6
           TUNNEL_SERVER_OFFER=11
           STORAGE_OFFER=25
-        elif [ "${{ inputs.resource_type }}" == "stage" ]; then
+        elif [ "${{ inputs.target }}" == "stage" ]; then
           BASE_IMAGE_OFFER=3
           TUNNEL_SERVER_OFFER=8
           STORAGE_OFFER=22
-        elif [ "${{ inputs.resource_type }}" == "testnet" ]; then
+        elif [ "${{ inputs.target }}" == "testnet" ]; then
           BASE_IMAGE_OFFER=6
           TUNNEL_SERVER_OFFER=11
           STORAGE_OFFER=25
