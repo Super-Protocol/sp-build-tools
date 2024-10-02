@@ -17,7 +17,7 @@ runs:
           exit 1
         fi
 
-        if [ ! -f "${{ inputs.config_file }}" ]; then
+        if [ ! -f "${{ inputs.spctl_config_file }}" ]; then
           echo "Error: config.json file is missing."
           exit 1
         fi
