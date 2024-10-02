@@ -47,7 +47,3 @@ runs:
         cat $WORKDIR/$RESOURCE_FILE_NAME
 
         echo "resource=$WORKDIR/$RESOURCE_FILE_NAME" >> $GITHUB_OUTPUT
-
-    - name: Cleanup
-      shell: bash
-      run: rm -rf $WORKDIR
