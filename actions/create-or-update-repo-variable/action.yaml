@@ -1,17 +1,16 @@
 name: Create or update repository variable
+description: Create or update repository variable
 
 inputs:
   gh_token:
-    type: string
-    description: 'GH token with access to repository'
+    description: GH token with access to repository
     required: true
   variable_name:
-    type: string
-    description: 'Variable name to create or update'
+    description: Variable name to create or update
     required: true
   data:
-    type: string
-    description: 'Data that should be set into variable'
+    description: Data that should be set into variable
+    required: true
 
 runs:
   using: composite
