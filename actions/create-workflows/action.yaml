@@ -2,6 +2,9 @@ name: Create workflow
 description: Create workflow with spctl tool and return created order numbers
 
 inputs:
+  spctl_config_file:
+    description: Path to spctl config file
+    default: ./config.json
   tee_offers:
     description: tee offers separated by comma (eg. 1,3)
     required: true
@@ -31,7 +34,9 @@ runs:
   using: composite
   steps:
     - name: Check spctl
-      uses: Super-Protocol/sp-build-tools/actions/check-spctl@start-tunnels-actions
+      uses: Super-Protocol/sp-build-tools/actions/check-spctl@v1
+      with:
+        spctl_config_file: ${{ inputs.spctl_config_file }}
 
     - name: Validate input
       shell: bash
@@ -67,7 +72,7 @@ runs:
 
         for orderId in "${orderIds[@]}"; do
           echo "Cancelling order $orderId"
-          ./spctl orders cancel $orderId || true
+          ./spctl orders cancel $orderId --config ${{ inputs.spctl_config_file }} || true
         done
 
     - name: Create workflows
@@ -96,7 +101,7 @@ runs:
             COMMAND="$COMMAND --data $item"
           done
 
-          COMMAND="$COMMAND --storage ${{ inputs.storage_offer }} --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} > workflow_result.txt"
+          COMMAND="$COMMAND --storage ${{ inputs.storage_offer }} --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} --config ${{ inputs.spctl_config_file }} > workflow_result.txt"
 
           echo "COMMAND=$COMMAND"
 

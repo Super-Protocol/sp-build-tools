@@ -1,6 +1,11 @@
 name: Check spctl
 description: Check if spctl installation and configuration correct
 
+inputs:
+  spctl_config_file:
+    description: Path to spctl config file
+    default: ./config.json
+
 runs:
   using: composite
   steps:
@@ -12,7 +17,7 @@ runs:
           exit 1
         fi
 
-        if [ ! -f "./config.json" ]; then
+        if [ ! -f "${{ inputs.config_file }}" ]; then
           echo "Error: config.json file is missing."
           exit 1
         fi

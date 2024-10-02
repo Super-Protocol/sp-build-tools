@@ -8,6 +8,7 @@ inputs:
   repository:
     required: true
     description: Specify 'public' or 'private'
+    default: public
   gh_token:
     description: GH token for downloading private SPCTL
 
