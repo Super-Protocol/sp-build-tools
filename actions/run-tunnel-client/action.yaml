@@ -9,7 +9,7 @@ inputs:
     description: Tee offers separated by comma (eg. 1,3)
     required: true
   tunnel_client:
-    description: Recourse or offer id of tunnel client solution
+    description: Recourse or offer id of tunnel client solution or "static" or "dynamic"
     required: true
   use_base_image:
     description: Should use NodeJs base image solution on workflow creation. Specify "true" if needed
@@ -38,7 +38,7 @@ inputs:
   domain:
     description: Domain which will be used in order in case of provided wildcard certificate
   content_folder:
-    description: Path to content folder. If not provided content should be provided in input_file
+    description: Path to content folder. If not provided content should be part of solution
   data:
     description: Path to additional input resource files or data offers, separated by comma. Will be used with --data option on "spctl workflow create command"
 
@@ -81,25 +81,24 @@ runs:
     - name: Set offers by target
       shell: bash
       run: |
-        if [ "${{ inputs.target }}" == "develop" ]; then
-          if [ -n "${{ inputs.use_base_image }}" ]; then
-            BASE_IMAGE_OFFER=6
+        BASE_IMAGE_OFFERS=(6 3 6)
+        TUNNEL_CLIENT_STATIC=(13 10 13)
+        TUNNEL_CLIENT_DYNAMIC=(14 11 14)
+        STORAGE_OFFERS=(25 22 25)
+
+        TARGETS=("develop" "stage" "testnet")
+
+        for i in "${!TARGETS[@]}"; do
+          if [ "${{ inputs.target }}" == "${TARGETS[$i]}" ]; then
+            [ -n "${{ inputs.use_base_image }}" ] && BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+            case "${{ inputs.tunnel_client }}" in
+              "static") TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC[$i]} ;;
+              "dynamic") TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_DYNAMIC[$i]} ;;
+              *) TUNNEL_CLIENT_OFFER=${{ inputs.tunnel_client }} ;;
+            esac
+            STORAGE_OFFER=${STORAGE_OFFERS[$i]}
           fi
-          TUNNEL_CLIENT_OFFER=13
-          STORAGE_OFFER=25
-        elif [ "${{ inputs.target }}" == "stage" ]; then
-          if [ -n "${{ inputs.use_base_image }}" ]; then
-            BASE_IMAGE_OFFER=3
-          fi
-          TUNNEL_CLIENT_OFFER=10
-          STORAGE_OFFER=22
-        elif [ "${{ inputs.target }}" == "testnet" ]; then
-          if [ -n "${{ inputs.use_base_image }}" ]; then
-            BASE_IMAGE_OFFER=6
-          fi
-          TUNNEL_CLIENT_OFFER=13
-          STORAGE_OFFER=25
-        fi
+        done
 
 
         echo "BASE_IMAGE_OFFER=$BASE_IMAGE_OFFER" >> $GITHUB_ENV
