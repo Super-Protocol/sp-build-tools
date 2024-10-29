@@ -132,12 +132,6 @@ runs:
         # remove all temporary files
         rm ec.yaml config.yaml provider-offers-config.json temp-1.json temp-2.json
 
-    - name: Setup the committers identity
-      shell: bash
-      run: |
-        git config user.email "github@superprotocol.com"
-        git config user.name "GitHub Super Bot"
-
     - name: Choose branch
       shell: bash
       run: |
@@ -154,6 +148,10 @@ runs:
       run: |
         cd argo
         LATEST_TAG=$(git describe --tags --always --abbrev=0)
+
+        # Setup the committers identity
+        git config user.email "github@superprotocol.com"
+        git config user.name "GitHub Super Bot"
 
         # Create a new feature branch for the changes.
         git checkout -b $BRANCH_NAME
