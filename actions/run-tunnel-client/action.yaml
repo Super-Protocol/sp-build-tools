@@ -20,6 +20,7 @@ inputs:
     description: Previous order numbers to cancel, separated by comma (eg. 100,102)
   min_rent_minutes:
     description: How long order should run
+    default: '129600'
   auth_token:
     description: The authentication token used by the tunnel server to identify tunnel clients
     required: true
