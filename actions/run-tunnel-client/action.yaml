@@ -91,11 +91,19 @@ runs:
 
         for i in "${!TARGETS[@]}"; do
           if [ "${{ inputs.target }}" == "${TARGETS[$i]}" ]; then
-            [ -n "${{ inputs.use_base_image }}" ] && BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
             case "${{ inputs.tunnel_client }}" in
-              "static") TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC[$i]} ;;
-              "dynamic") TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_DYNAMIC[$i]} ;;
-              *) TUNNEL_CLIENT_OFFER=${{ inputs.tunnel_client }} ;;
+              "static") 
+                TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC[$i]} 
+                BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+                ;;
+              "dynamic") 
+                TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_DYNAMIC[$i]}
+                BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+                ;;
+              *) 
+                TUNNEL_CLIENT_OFFER=${{ inputs.tunnel_client }} 
+                [ -n "${{ inputs.use_base_image }}" ] && BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+                ;;
             esac
             STORAGE_OFFER=${STORAGE_OFFERS[$i]}
           fi
