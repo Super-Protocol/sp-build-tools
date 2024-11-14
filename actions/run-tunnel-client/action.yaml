@@ -106,6 +106,7 @@ runs:
                 ;;
             esac
             STORAGE_OFFER=${STORAGE_OFFERS[$i]}
+            break
           fi
         done
 
