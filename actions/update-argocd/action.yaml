@@ -52,7 +52,7 @@ runs:
         elif [ "${{ inputs.target }}" == "stage" ]; then
           CLUSTER=ovh-stg/stage
         elif [ "${{ inputs.target }}" == "testnet" ]; then
-          CLUSTER=gcore-testnet/testnet
+          CLUSTER=ovh-testnet/testnet
         fi
 
         echo "CLUSTER=$CLUSTER" >> $GITHUB_ENV
