@@ -153,10 +153,12 @@ runs:
         git config user.email "github@superprotocol.com"
         git config user.name "GitHub Super Bot"
 
-        # Create a new feature branch for the changes.
-        git checkout -b $BRANCH_NAME
+        if [ "${{ inputs.commit_type }}" == "pull-request" ]; then
+          # Create a new feature branch for the changes.
+          git checkout -b $BRANCH_NAME
+        fi
 
-        # Commit the changes and push the feature branch to origin
+        # Commit the changes and push to the appropriate branch
         git add .
         git commit -m "Update ${{ inputs.resource_type }} ${{ inputs.solution_name }} (${{ inputs.target }}) according to ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         git push origin $BRANCH_NAME
@@ -165,6 +167,7 @@ runs:
         echo "::notice:: Created commit: ${{ github.server_url }}/super-protocol/argocd-clusters/commit/$last_commit_info"
 
     - name: Create Pull Request
+      if: ${{ inputs.commit_type == 'pull-request' }}
       uses: actions/github-script@v7
       with:
         github-token: ${{ inputs.gh_token }}
