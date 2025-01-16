@@ -70,7 +70,7 @@ runs:
     - name: Modify cluster files
       shell: bash
       run: |
-        set -x
+        #set -x
         COMPONENT=${{ inputs.component }}
         SUBCOMPONENT=${{ inputs.subcomponent }}
         # backward compatibility with TL chart naming
@@ -83,8 +83,8 @@ runs:
         cd $DST
 
         VALUES_FILE="helm-values-$COMPONENT.yaml"
-        echo "$VALUES_FILE content before"
-        cat $VALUES_FILE
+        #echo "$VALUES_FILE content before"
+        #cat $VALUES_FILE
 
         if [[ -n "$SUBCOMPONENT" && $(yq eval ".$SUBCOMPONENT" "$VALUES_FILE" 2>/dev/null) != "null" ]]; then
           # If subcomponent exists (trustedLoader / mediator), update the image tag under the subcomponent
@@ -93,8 +93,8 @@ runs:
           # If subcomponent does not exist, add the image tag directly at the root level
           yq eval ".image.tag = \"$IMAGE_TAG\"" -i "$VALUES_FILE"
         fi
-        echo "$VALUES_FILE content after changes"
-        cat $VALUES_FILE
+        #echo "$VALUES_FILE content after changes"
+        #cat $VALUES_FILE
 
 
     - name: Make commit
