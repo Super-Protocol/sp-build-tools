@@ -73,6 +73,8 @@ runs:
         set -x
         COMPONENT=${{ inputs.component }}
         SUBCOMPONENT=${{ inputs.subcomponent }}
+        # backward compatibility with TL chart naming
+        SUBCOMPONENT=${SUBCOMPONENT/trusted-loader/trustedLoader}
         IMAGE_TAG=${{ inputs.image_tag }}
         WORKDIR=$(pwd)
         DST=$WORKDIR/argo-vm/helm-charts/$COMPONENT/$ARGO_SP_ENV
