@@ -1,0 +1,118 @@
+name: Update argo-vm
+description: Update TL/EC tags for argo environments in argo-vm repo
+
+inputs:
+  gh_token:
+    description: Token for GH argo repository
+    required: true
+  target:
+    description: Specify "develop" / "staging" / "testnet" / "main"
+    required: true
+  component:
+    description: Name of the component
+    required: true
+  subcomponent:
+    description: Name of the subcomponent
+    required: false
+  image_tag:
+    description: Package tag
+    required: true
+  commit_type:
+    description: Specify "direct-commit" or "pull-request"
+    required: true
+    default: direct-commit
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate repository input
+      shell: bash
+      run: |
+        if [ "${{ inputs.commit_type }}" != "direct-commit" ]; then
+          echo "Invalid commit type: ${{ inputs.commit_type }}"
+          exit 1
+        fi
+        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "staging" ] && [ "${{ inputs.target }}" != "testnet" ] && [ "${{ inputs.target }}" != "main" ]; then
+          echo "Invalid target type: ${{ inputs.target }}"
+          exit 1
+        fi
+
+
+    - name: Choose branch & ARGO_SP_ENV
+      shell: bash
+      run: |
+        if [ "${{ inputs.commit_type }}" == "pull-request" ]; then
+          BRANCH_NAME="update-${{ inputs.component }}-${{ inputs.subcomponent }}-${{ github.image_tag }}"
+        else
+          BRANCH_NAME="develop" # change to main
+        fi
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+        if [ "${{ inputs.target }}" == "testnet" ]; then
+          ARGO_SP_ENV=main
+        else
+          ARGO_SP_ENV=${{ inputs.target }}
+        fi
+        echo "ARGO_SP_ENV=$ARGO_SP_ENV" >> $GITHUB_ENV
+
+
+    - name: Checkout argocd repo
+      uses: actions/checkout@v4
+      with:
+        path: argo-vm
+        ref: ${{ env.BRANCH_NAME }}
+        persist-credentials: true
+        fetch-depth: 1
+        repository: super-protocol/argo-vm
+        token: ${{ inputs.gh_token }}
+
+
+    - name: Modify cluster files
+      shell: bash
+      run: |
+        COMPONENT=${{ inputs.component }}
+        SUBCOMPONENT=${{ inputs.subcomponent }}
+        IMAGE_TAG=${{ inputs.image_tag }}
+        WORKDIR=$(pwd)
+        DST=$WORKDIR/argo-vm/helm-charts/$COMPONENT/$ARGO_SP_ENV
+
+        ls -la $DST
+        cd $DST
+
+        VALUES_FILE="helm-values-$COMPONENT.yaml"
+        echo "$VALUES_FILE content before"
+        cat $VALUES_FILE
+
+        if yq eval ".$SUBCOMPONENT" "$VALUES_FILE" > /dev/null 2>&1; then
+          # If subcomponent exists (trustedLoader / mediator), update the image tag under the subcomponent
+          yq eval ".$SUBCOMPONENT.image.tag = \"$IMAGE_TAG\"" -i "$VALUES_FILE"
+        else
+          # If subcomponent does not exist, add the image tag directly at the root level
+          yq eval ".image.tag = \"$IMAGE_TAG\"" -i "$VALUES_FILE"
+        fi
+        echo "$VALUES_FILE content after changes"
+        cat $VALUES_FILE
+
+
+    - name: Make commit
+      shell: bash
+      run: |
+        cd argo-vm
+        #if [ "${{ inputs.commit_type }}" == "pull-request" ]; then
+        #  # Create a new feature branch for the changes.
+        #  BRANCH_NAME="update-${{ inputs.component }}-${{ inputs.subcomponent }}-${{ github.image_tag }}"
+        #  git checkout -b $BRANCH_NAME
+        #fi
+        git checkout $BRANCH_NAME
+
+        # Setup the committers identity
+        git config user.email "github@superprotocol.com"
+        git config user.name "GitHub Super Bot"
+
+        # Commit the changes and push to the appropriate branch
+        git add .
+        git commit -m "Update ${{ inputs.component }} ${{ inputs.subcomponent }} (${{ inputs.image_tag }}) according to ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        git push origin $BRANCH_NAME
+        last_commit_info=$(git show --oneline -s)
+
+        echo "::notice:: Created commit: ${{ github.server_url }}/super-protocol/argo-vm/commit/$last_commit_info"
