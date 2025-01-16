@@ -70,6 +70,7 @@ runs:
     - name: Modify cluster files
       shell: bash
       run: |
+        set -x
         COMPONENT=${{ inputs.component }}
         SUBCOMPONENT=${{ inputs.subcomponent }}
         IMAGE_TAG=${{ inputs.image_tag }}
@@ -83,7 +84,7 @@ runs:
         echo "$VALUES_FILE content before"
         cat $VALUES_FILE
 
-        if yq eval ".$SUBCOMPONENT" "$VALUES_FILE" > /dev/null 2>&1; then
+        if [[ -n "$SUBCOMPONENT" && $(yq eval ".$SUBCOMPONENT" "$VALUES_FILE" 2>/dev/null) != "null" ]]; then
           # If subcomponent exists (trustedLoader / mediator), update the image tag under the subcomponent
           yq eval ".$SUBCOMPONENT.image.tag = \"$IMAGE_TAG\"" -i "$VALUES_FILE"
         else
