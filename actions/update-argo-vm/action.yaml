@@ -44,7 +44,7 @@ runs:
         if [ "${{ inputs.commit_type }}" == "pull-request" ]; then
           BRANCH_NAME="update-${{ inputs.component }}-${{ inputs.subcomponent }}-${{ github.image_tag }}"
         else
-          BRANCH_NAME="develop" # change to main
+          BRANCH_NAME="main" # change to main
         fi
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
