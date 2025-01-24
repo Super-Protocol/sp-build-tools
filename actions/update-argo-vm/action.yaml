@@ -86,11 +86,14 @@ runs:
         #echo "$VALUES_FILE content before"
         #cat $VALUES_FILE
 
+        # If subcomponent exists (trustedLoader / mediator), update the image tag under the subcomponent
         if [[ -n "$SUBCOMPONENT" && $(yq eval ".$SUBCOMPONENT" "$VALUES_FILE" 2>/dev/null) != "null" ]]; then
-          # If subcomponent exists (trustedLoader / mediator), update the image tag under the subcomponent
+          if [[ "$SUBCOMPONENT" == "trustedLoader" ]]; then
+            IMAGE_TAG="${IMAGE_TAG}-non-gsc"
+          fi
           yq eval ".$SUBCOMPONENT.image.tag = \"$IMAGE_TAG\"" -i "$VALUES_FILE"
+        # If subcomponent does not exist, add the image tag directly at the root level
         else
-          # If subcomponent does not exist, add the image tag directly at the root level
           yq eval ".image.tag = \"$IMAGE_TAG\"" -i "$VALUES_FILE"
         fi
         #echo "$VALUES_FILE content after changes"
