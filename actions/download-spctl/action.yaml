@@ -45,12 +45,8 @@ runs:
 
           if [ "$TAG_VERSION" = "latest" ]; then
               TAG_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$OWNER/$REPO/releases/latest" | jq -r '.tag_name')
-            fi
-          fi
-
-          if [ "$TAG_VERSION" = "beta" ]; then
+          elif [ "$TAG_VERSION" = "beta" ]; then
               TAG_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$OWNER/$REPO/releases" | jq -r '[.[] | select(.tag_name | contains("beta"))] | .[0].tag_name')
-            fi
           fi
 
           echo "$TAG_VERSION"
