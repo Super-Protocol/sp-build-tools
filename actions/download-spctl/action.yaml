@@ -3,7 +3,7 @@ description: Download SPCTL provided version
 
 inputs:
   version:
-    description: spctl version should be downloaded
+    description: spctl version or "latest" or "beta" (latest beta version)
     default: latest
   repository:
     required: true
@@ -42,23 +42,25 @@ runs:
           local TAG_VERSION="$1"
           local OWNER="$2"
           local REPO="$3"
-          
+
           if [ "$TAG_VERSION" = "latest" ]; then
-            TAG_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$OWNER/$REPO/releases/latest" | jq -r '.tag_name')
+              TAG_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$OWNER/$REPO/releases/latest" | jq -r '.tag_name')
+          elif [ "$TAG_VERSION" = "beta" ]; then
+              TAG_VERSION=$(curl -s -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$OWNER/$REPO/releases" | jq -r '[.[] | select(.tag_name | contains("beta"))] | .[0].tag_name')
           fi
-          
+
           echo "$TAG_VERSION"
         }
         execute_fetch() {
           local REPO="$1"
           local TAG_VERSION="$2"
-          
+
           if [ "${{ inputs.repository }}" = "public" ]; then
             fetch --repo="https://github.com/$OWNER/$REPO" --tag="$TAG_VERSION" --release-asset="spctl-linux-x64" ./
           else
             fetch --repo="https://github.com/$OWNER/$REPO" --tag="$TAG_VERSION" --release-asset="spctl-linux-x64" --github-oauth-token="$GH_TOKEN" ./
           fi
-          
+
         }
 
         REPO=$([[ "${{ inputs.repository }}" = "public" ]] && echo "ctl" || echo "spctl")
