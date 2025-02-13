@@ -36,7 +36,7 @@ runs:
     - name: Check variables
       shell: bash
       run: |
-        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
+        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]  && [ "${{ inputs.target }}" != "mainnet" ]; then
           echo "Invalid target type: ${{ inputs.target }}"
           exit 1
         fi
@@ -47,15 +47,19 @@ runs:
         if [ "${{ inputs.target }}" == "develop" ]; then
           BASE_IMAGE_OFFER=6
           TUNNEL_SERVER_OFFER=11
-          STORAGE_OFFER=25
+          STORAGE_OFFER=39
         elif [ "${{ inputs.target }}" == "stage" ]; then
-          BASE_IMAGE_OFFER=3
-          TUNNEL_SERVER_OFFER=8
-          STORAGE_OFFER=22
+          BASE_IMAGE_OFFER=4
+          TUNNEL_SERVER_OFFER=9
+          STORAGE_OFFER=38
         elif [ "${{ inputs.target }}" == "testnet" ]; then
           BASE_IMAGE_OFFER=6
           TUNNEL_SERVER_OFFER=11
           STORAGE_OFFER=25
+        elif [ "${{ inputs.target }}" == "mainnet" ]; then
+          BASE_IMAGE_OFFER=14
+          TUNNEL_SERVER_OFFER=19
+          STORAGE_OFFER=49
         fi
 
         echo "BASE_IMAGE_OFFER=$BASE_IMAGE_OFFER" >> $GITHUB_ENV

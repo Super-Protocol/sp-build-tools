@@ -32,11 +32,10 @@ runs:
           echo "Invalid commit type: ${{ inputs.commit_type }}"
           exit 1
         fi
-        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "staging" ] && [ "${{ inputs.target }}" != "testnet" ] && [ "${{ inputs.target }}" != "main" ]; then
+        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]  && [ "${{ inputs.target }}" != "mainnet" ]; then
           echo "Invalid target type: ${{ inputs.target }}"
           exit 1
         fi
-
 
     - name: Choose branch & ARGO_SP_ENV
       shell: bash
@@ -48,13 +47,12 @@ runs:
         fi
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
-        if [ "${{ inputs.target }}" == "testnet" ]; then
+        if [ "${{ inputs.target }}" == "testnet" ] || [ "${{ inputs.target }}" == "mainnet" ]; then
           ARGO_SP_ENV=main
         else
           ARGO_SP_ENV=${{ inputs.target }}
         fi
         echo "ARGO_SP_ENV=$ARGO_SP_ENV" >> $GITHUB_ENV
-
 
     - name: Checkout argocd repo
       uses: actions/checkout@v4
@@ -65,7 +63,6 @@ runs:
         fetch-depth: 1
         repository: super-protocol/argo-vm
         token: ${{ inputs.gh_token }}
-
 
     - name: Modify cluster files
       shell: bash
@@ -98,7 +95,6 @@ runs:
         fi
         #echo "$VALUES_FILE content after changes"
         #cat $VALUES_FILE
-
 
     - name: Make commit
       shell: bash
