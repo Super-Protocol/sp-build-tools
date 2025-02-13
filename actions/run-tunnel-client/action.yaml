@@ -14,7 +14,7 @@ inputs:
   use_base_image:
     description: Should use NodeJs base image solution on workflow creation. Specify "true" if needed
   target:
-    description: Specify "develop" "stage" or "testnet"
+    description: Specify "develop" "stage" or "testnet" or "mainnet"
     required: true
   previous_orders:
     description: Previous order numbers to cancel, separated by comma (eg. 100,102)
@@ -59,7 +59,7 @@ runs:
     - name: Check variables
       shell: bash
       run: |
-        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
+        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]  && [ "${{ inputs.target }}" != "mainnet" ]; then
           echo "Invalid target type: ${{ inputs.target }}"
           exit 1
         fi
@@ -82,12 +82,12 @@ runs:
     - name: Set offers by target
       shell: bash
       run: |
-        BASE_IMAGE_OFFERS=(6 3 6)
-        TUNNEL_CLIENT_STATIC=(13 10 13)
-        TUNNEL_CLIENT_DYNAMIC=(14 11 14)
-        STORAGE_OFFERS=(25 22 25)
+        BASE_IMAGE_OFFERS=(6 4 6 14)
+        TUNNEL_CLIENT_STATIC=(13 11 13 21)
+        TUNNEL_CLIENT_DYNAMIC=(14 12 14 22)
+        STORAGE_OFFERS=(39 38 25 49)
 
-        TARGETS=("develop" "stage" "testnet")
+        TARGETS=("develop" "stage" "testnet" "mainnet")
 
         for i in "${!TARGETS[@]}"; do
           if [ "${{ inputs.target }}" == "${TARGETS[$i]}" ]; then

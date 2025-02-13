@@ -34,10 +34,14 @@ runs:
         if [ "${{ inputs.resource_type }}" != "solution" ] && [ "${{ inputs.resource_type }}" != "data" ]; then
           echo "Invalid resource type: ${{ inputs.resource_type }}"
           exit 1
-        elif [ "${{ inputs.commit_type }}" != "direct-commit" ] && [ "${{ inputs.commit_type }}" != "pull-request" ]; then
+        fi
+
+        if [ "${{ inputs.commit_type }}" != "direct-commit" ] && [ "${{ inputs.commit_type }}" != "pull-request" ]; then
           echo "Invalid commit type: ${{ inputs.commit_type }}"
           exit 1
-        elif [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]; then
+        fi
+
+        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]  && [ "${{ inputs.target }}" != "mainnet" ]; then
           echo "Invalid target type: ${{ inputs.target }}"
           exit 1
         fi
@@ -53,6 +57,8 @@ runs:
           CLUSTER=ovh-stg/stage
         elif [ "${{ inputs.target }}" == "testnet" ]; then
           CLUSTER=ovh-testnet/testnet
+        elif [ "${{ inputs.target }}" == "mainnet" ]; then
+          CLUSTER=gcore-testnet/testnet
         fi
 
         echo "CLUSTER=$CLUSTER" >> $GITHUB_ENV
