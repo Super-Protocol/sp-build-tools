@@ -47,11 +47,11 @@ runs:
         if [ "${{ inputs.target }}" == "develop" ]; then
           BASE_IMAGE_OFFER=6
           TUNNEL_SERVER_OFFER=11
-          STORAGE_OFFER=25
+          STORAGE_OFFER=39
         elif [ "${{ inputs.target }}" == "stage" ]; then
-          BASE_IMAGE_OFFER=3
-          TUNNEL_SERVER_OFFER=8
-          STORAGE_OFFER=22
+          BASE_IMAGE_OFFER=4
+          TUNNEL_SERVER_OFFER=9
+          STORAGE_OFFER=38
         elif [ "${{ inputs.target }}" == "testnet" ]; then
           BASE_IMAGE_OFFER=6
           TUNNEL_SERVER_OFFER=11
