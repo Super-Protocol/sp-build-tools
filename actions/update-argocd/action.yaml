@@ -123,11 +123,11 @@ runs:
         encryption_block=$(echo "$json_content" | jq ".encryption")
         resource_block=$(echo "$json_content" | jq ".resource")
         hash_block=$(echo "$json_content" | jq ".hash")
-
+        
         # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
-        cat provider-offers-config.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {encryption:$encryption_block}' | jq --slurp '.' > temp-1.json
-        cat temp-1.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {resource:$resource_block}' | jq --slurp '.' > temp-2.json
-        cat temp-2.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {hash:$hash_block}' | jq --slurp '.' > provider-offers-config.json
+        cat provider-offers-config.json | jq --arg oid "$offer_id" --argjson enc "$encryption_block" '.[] | select(.id==$oid) |= . + {encryption:$enc}' | jq --slurp '.' > temp-1.json
+        cat temp-1.json | jq --arg oid "$offer_id" --argjson res "$resource_block" '.[] | select(.id==$oid) |= . + {resource:$res}' | jq --slurp '.' > temp-2.json
+        cat temp-2.json | jq --arg oid "$offer_id" --argjson hash "$hash_block" '.[] | select(.id==$oid) |= . + {hash:$hash}' | jq --slurp '.' > provider-offers-config.json
         
         # writing back JSON config into yaml and into the argoCD app helm values
         yq --inplace '.config.PROVIDER_OFFERS_JSON = load_str("provider-offers-config.json")'  config.yaml
