@@ -24,6 +24,9 @@ inputs:
     description: Specify "direct-commit" or "pull-request"
     required: true
     default: direct-commit
+  allow_multiple_update:
+    description: Updates all resources with same name in target argo file
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -125,9 +128,9 @@ runs:
         hash_block=$(echo "$json_content" | jq ".hash")
 
         # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
-        cat provider-offers-config.json | jq  ".[] | select(.id==$offer_id) |= . + {encryption:$encryption_block}" | jq --slurp '.' >  temp-1.json
-        cat temp-1.json | jq  ".[] | select(.id==$offer_id) |= . + {resource:$resource_block}" | jq --slurp '.' >  temp-2.json
-        cat temp-2.json | jq  ".[] | select(.id==$offer_id) |= . + {hash:$hash_block}" | jq --slurp '.' >  provider-offers-config.json
+        cat provider-offers-config.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {encryption:$encryption_block}' | jq --slurp '.' > temp-1.json
+        cat temp-1.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {resource:$resource_block}' | jq --slurp '.' > temp-2.json
+        cat temp-2.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {hash:$hash_block}' | jq --slurp '.' > provider-offers-config.json
 
         # writing back JSON config into yaml and into the argoCD app helm values
         yq --inplace '.config.PROVIDER_OFFERS_JSON = load_str("provider-offers-config.json")'  config.yaml
