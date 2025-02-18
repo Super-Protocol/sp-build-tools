@@ -127,10 +127,20 @@ runs:
         resource_block=$(echo "$json_content" | jq ".resource")
         hash_block=$(echo "$json_content" | jq ".hash")
 
-        # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
-        cat provider-offers-config.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {encryption:$encryption_block}' | jq --slurp '.' > temp-1.json
-        cat temp-1.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {resource:$resource_block}' | jq --slurp '.' > temp-2.json
-        cat temp-2.json | jq --arg oid "$offer_id" '.[] | select(.id==$oid) |= . + {hash:$hash_block}' | jq --slurp '.' > provider-offers-config.json
+        # Check if multiple IDs and not allowed
+        if [[ $offer_id =~ [[:space:]] ]] && [[ "${{ inputs.allow_multiple_update }}" != "true" ]]; then
+            echo "Error: Multiple offer IDs provided but allow_multiple_update is not set to true"
+            exit 1
+        fi
+
+        # Process each ID
+        for id in $offer_id; do
+            # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
+            
+            cat provider-offers-config.json | jq  ".[] | select(.id==$id) |= . + {encryption:$encryption_block}" | jq --slurp '.' >  temp-1.json
+            cat temp-1.json | jq  ".[] | select(.id==$id) |= . + {resource:$resource_block}" | jq --slurp '.' >  temp-2.json
+            cat temp-2.json | jq  ".[] | select(.id==$id) |= . + {hash:$hash_block}" | jq --slurp '.' >  provider-offers-config.json
+        done
 
         # writing back JSON config into yaml and into the argoCD app helm values
         yq --inplace '.config.PROVIDER_OFFERS_JSON = load_str("provider-offers-config.json")'  config.yaml
