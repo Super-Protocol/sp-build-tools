@@ -77,7 +77,7 @@ runs:
         token: ${{ inputs.gh_token }}
 
     - name: Setup yq if needed
-      uses: chrisdickinson/setup-yq@latest
+      uses: chrisdickinson/setup-yq@3d931309f27270ebbafd53f2daee773a82ea1822
       with:
         yq-version: v4.44.3
 
