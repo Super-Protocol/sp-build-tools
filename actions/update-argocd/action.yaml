@@ -24,6 +24,9 @@ inputs:
     description: Specify "direct-commit" or "pull-request"
     required: true
     default: direct-commit
+  allow_multiple_update:
+    description: Updates all resources with same name in target argo file
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -74,7 +77,7 @@ runs:
         token: ${{ inputs.gh_token }}
 
     - name: Setup yq if needed
-      uses: chrisdickinson/setup-yq@latest
+      uses: chrisdickinson/setup-yq@3d931309f27270ebbafd53f2daee773a82ea1822
       with:
         yq-version: v4.44.3
 
@@ -124,10 +127,20 @@ runs:
         resource_block=$(echo "$json_content" | jq ".resource")
         hash_block=$(echo "$json_content" | jq ".hash")
 
-        # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
-        cat provider-offers-config.json | jq  ".[] | select(.id==$offer_id) |= . + {encryption:$encryption_block}" | jq --slurp '.' >  temp-1.json
-        cat temp-1.json | jq  ".[] | select(.id==$offer_id) |= . + {resource:$resource_block}" | jq --slurp '.' >  temp-2.json
-        cat temp-2.json | jq  ".[] | select(.id==$offer_id) |= . + {hash:$hash_block}" | jq --slurp '.' >  provider-offers-config.json
+        # Check if multiple IDs and not allowed
+        if [[ $offer_id =~ [[:space:]] ]] && [[ "${{ inputs.allow_multiple_update }}" != "true" ]]; then
+            echo "Error: Multiple offer IDs provided but allow_multiple_update is not set to true"
+            exit 1
+        fi
+
+        # Process each ID
+        for id in $offer_id; do
+            # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
+            
+            cat provider-offers-config.json | jq  ".[] | select(.id==$id) |= . + {encryption:$encryption_block}" | jq --slurp '.' >  temp-1.json
+            cat temp-1.json | jq  ".[] | select(.id==$id) |= . + {resource:$resource_block}" | jq --slurp '.' >  temp-2.json
+            cat temp-2.json | jq  ".[] | select(.id==$id) |= . + {hash:$hash_block}" | jq --slurp '.' >  provider-offers-config.json
+        done
 
         # writing back JSON config into yaml and into the argoCD app helm values
         yq --inplace '.config.PROVIDER_OFFERS_JSON = load_str("provider-offers-config.json")'  config.yaml
