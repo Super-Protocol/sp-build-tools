@@ -32,7 +32,7 @@ runs:
           echo "Invalid commit type: ${{ inputs.commit_type }}"
           exit 1
         fi
-        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "stage" ] && [ "${{ inputs.target }}" != "testnet" ]  && [ "${{ inputs.target }}" != "mainnet" ]; then
+        if [ "${{ inputs.target }}" != "develop" ] && [ "${{ inputs.target }}" != "staging" ] && [ "${{ inputs.target }}" != "testnet" ]  && [ "${{ inputs.target }}" != "mainnet" ]; then
           echo "Invalid target type: ${{ inputs.target }}"
           exit 1
         fi
