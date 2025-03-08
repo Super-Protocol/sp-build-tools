@@ -57,9 +57,9 @@ runs:
           TUNNEL_SERVER_OFFER=11
           STORAGE_OFFER=25
         elif [ "${{ inputs.target }}" == "mainnet" ]; then
-          BASE_IMAGE_OFFER=14
-          TUNNEL_SERVER_OFFER=19
-          STORAGE_OFFER=49
+          BASE_IMAGE_OFFER=13
+          TUNNEL_SERVER_OFFER=18
+          STORAGE_OFFER=47
         fi
 
         echo "BASE_IMAGE_OFFER=$BASE_IMAGE_OFFER" >> $GITHUB_ENV

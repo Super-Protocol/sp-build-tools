@@ -82,10 +82,10 @@ runs:
     - name: Set offers by target
       shell: bash
       run: |
-        BASE_IMAGE_OFFERS=(6 4 6 14)
-        TUNNEL_CLIENT_STATIC=(13 11 13 21)
-        TUNNEL_CLIENT_DYNAMIC=(14 12 14 22)
-        STORAGE_OFFERS=(39 38 25 49)
+        BASE_IMAGE_OFFERS=(6 4 6 13)
+        TUNNEL_CLIENT_STATIC=(13 11 13 20)
+        TUNNEL_CLIENT_DYNAMIC=(14 12 14 21)
+        STORAGE_OFFERS=(39 38 25 47)
 
         TARGETS=("develop" "stage" "testnet" "mainnet")
 
