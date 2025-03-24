@@ -55,12 +55,7 @@ runs:
           local REPO="$1"
           local TAG_VERSION="$2"
 
-          if [ "${{ inputs.repository }}" = "public" ]; then
-            fetch --repo="https://github.com/$OWNER/$REPO" --tag="$TAG_VERSION" --release-asset="spctl-linux-x64" ./
-          else
-            fetch --repo="https://github.com/$OWNER/$REPO" --tag="$TAG_VERSION" --release-asset="spctl-linux-x64" --github-oauth-token="$GH_TOKEN" ./
-          fi
-
+          fetch --repo="https://github.com/$OWNER/$REPO" --tag="$TAG_VERSION" --release-asset="spctl-linux-x64" --github-oauth-token="$GH_TOKEN" ./
         }
 
         REPO=$([[ "${{ inputs.repository }}" = "public" ]] && echo "ctl" || echo "spctl")
