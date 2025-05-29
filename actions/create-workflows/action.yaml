@@ -13,6 +13,8 @@ inputs:
   solution:
     description: Solution offer number or path to file with solution resource
     required: true
+  solution_configuration:
+    description: Path to solution configuration file
   data:
     description: Data offer number or path to data resource file. If data several, separate by comma (103,./data-settings.json)
     default: ''
@@ -91,6 +93,10 @@ runs:
           fi
 
           COMMAND="$COMMAND --solution ${{ inputs.solution }}"
+
+          if [ -n "${{ inputs.solution_configuration }}" ]; then
+            COMMAND="$COMMAND --solution-configuration ${{ inputs.solution_configuration }}"
+          fi
 
           # Split inputs.data into an array using a comma as a separator
           IFS=',' read -ra data_items <<< "${{ inputs.data }}"
