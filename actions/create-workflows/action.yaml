@@ -15,7 +15,7 @@ inputs:
     required: true
   data:
     description: Data offer number or path to data resource file. If data several, separate by comma (103,./data-settings.json)
-    required: true
+    default: ''
   storage_offer:
     description: Storage offer number
     required: true
