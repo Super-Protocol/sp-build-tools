@@ -21,7 +21,6 @@ inputs:
     required: true
   use_base_image:
     description: Whether to use base image in the workflow
-    default: 'true'
 
 outputs:
   order_ids:
