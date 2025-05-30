@@ -13,6 +13,7 @@ inputs:
     required: true
   use_base_image:
     description: Should use NodeJs base image solution on workflow creation. Specify "true" if needed
+    default: 'false'
   target:
     description: Specify "develop" "stage" or "testnet" or "mainnet"
     required: true
@@ -84,7 +85,9 @@ runs:
       run: |
         BASE_IMAGE_OFFERS=(6 4 6 13)
         TUNNEL_CLIENT_STATIC=(13 11 13 20)
+        TUNNEL_CLIENT_STATIC_IMAGE=(126 267 0 20)
         TUNNEL_CLIENT_DYNAMIC=(14 12 14 21)
+        TUNNEL_CLIENT_DYNAMIC_IMAGE=(0 0 0 0)
         STORAGE_OFFERS=(39 38 25 47)
 
         TARGETS=("develop" "stage" "testnet" "mainnet")
@@ -93,16 +96,24 @@ runs:
           if [ "${{ inputs.target }}" == "${TARGETS[$i]}" ]; then
             case "${{ inputs.tunnel_client }}" in
               "static") 
-                TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC[$i]} 
-                BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+                if [ "${{ inputs.use_base_image }}" == "true" ]; then
+                  TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC[$i]} 
+                  BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+                else
+                  TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC_IMAGE[$i]}
+                fi
                 ;;
               "dynamic") 
-                TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_DYNAMIC[$i]}
-                BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+                if [ "${{ inputs.use_base_image }}" == "true" ]; then
+                  TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_DYNAMIC[$i]}
+                  BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+                else
+                  TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_DYNAMIC_IMAGE[$i]}
+                fi
                 ;;
               *) 
                 TUNNEL_CLIENT_OFFER=${{ inputs.tunnel_client }} 
-                [ -n "${{ inputs.use_base_image }}" ] && BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
+                [ "${{ inputs.use_base_image }}" == "true" ] && BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
                 ;;
             esac
             STORAGE_OFFER=${STORAGE_OFFERS[$i]}
