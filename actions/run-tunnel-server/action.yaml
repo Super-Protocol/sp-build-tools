@@ -43,39 +43,54 @@ runs:
           exit 1
         fi
 
-    - name: Set base image offer
+    - name: Set base image and tunnel server offer
       if: ${{ inputs.use_base_image == 'true' }}
       shell: bash
       run: |
         if [ "${{ inputs.target }}" == "develop" ]; then
           BASE_IMAGE_OFFER=6
+          TUNNEL_SERVER_OFFER=11
         elif [ "${{ inputs.target }}" == "stage" ]; then
           BASE_IMAGE_OFFER=4
+          TUNNEL_SERVER_OFFER=9
         elif [ "${{ inputs.target }}" == "testnet" ]; then
           BASE_IMAGE_OFFER=6
+          TUNNEL_SERVER_OFFER=11
         elif [ "${{ inputs.target }}" == "mainnet" ]; then
           BASE_IMAGE_OFFER=13
+          TUNNEL_SERVER_OFFER=18
         fi
         echo "BASE_IMAGE_OFFER=$BASE_IMAGE_OFFER" >> $GITHUB_ENV
+        echo "TUNNEL_SERVER_OFFER=$TUNNEL_SERVER_OFFER" >> $GITHUB_ENV
 
-    - name: Set offers by target
+    - name: Set tunnel server offer only
+      if: ${{ inputs.use_base_image == 'false' }}
       shell: bash
       run: |
         if [ "${{ inputs.target }}" == "develop" ]; then
-          TUNNEL_SERVER_OFFER=11
-          STORAGE_OFFER=39
+          TUNNEL_SERVER_OFFER=124
         elif [ "${{ inputs.target }}" == "stage" ]; then
-          TUNNEL_SERVER_OFFER=9
-          STORAGE_OFFER=38
+          TUNNEL_SERVER_OFFER=265
         elif [ "${{ inputs.target }}" == "testnet" ]; then
-          TUNNEL_SERVER_OFFER=11
-          STORAGE_OFFER=25
+          TUNNEL_SERVER_OFFER=0
         elif [ "${{ inputs.target }}" == "mainnet" ]; then
           TUNNEL_SERVER_OFFER=18
+        fi
+        echo "TUNNEL_SERVER_OFFER=$TUNNEL_SERVER_OFFER" >> $GITHUB_ENV
+
+    - name: Set storage offer
+      shell: bash
+      run: |
+        if [ "${{ inputs.target }}" == "develop" ]; then
+          STORAGE_OFFER=39
+        elif [ "${{ inputs.target }}" == "stage" ]; then
+          STORAGE_OFFER=38
+        elif [ "${{ inputs.target }}" == "testnet" ]; then
+          STORAGE_OFFER=25
+        elif [ "${{ inputs.target }}" == "mainnet" ]; then
           STORAGE_OFFER=47
         fi
 
-        echo "TUNNEL_SERVER_OFFER=$TUNNEL_SERVER_OFFER" >> $GITHUB_ENV
         echo "STORAGE_OFFER=$STORAGE_OFFER" >> $GITHUB_ENV
 
     - name: Prepare working directory
