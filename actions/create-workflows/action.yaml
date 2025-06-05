@@ -14,7 +14,7 @@ inputs:
     description: Solution offer number or path to file with solution resource
     required: true
   solution_configuration:
-    description: Path to solution configuration file
+    description: Path to solution configuration file or multiple files separated by comma
   data:
     description: Data offer number or path to data resource file. If data several, separate by comma (103,./data-settings.json)
     default: ''
@@ -65,6 +65,31 @@ runs:
           fi
         done
 
+        # Validate solution_configuration if provided
+        if [ -n "${{ inputs.solution_configuration }}" ]; then
+          # Split inputs.solution_configuration into an array using a comma as a separator
+          IFS=',' read -ra config_items <<< "${{ inputs.solution_configuration }}"
+          
+          # Split inputs.tee_offers into an array using a comma as a separator
+          IFS=',' read -ra tee_items <<< "${{ inputs.tee_offers }}"
+          
+          # If multiple configurations provided, count must match tee_offers count
+          if [ ${#config_items[@]} -gt 1 ]; then
+            if [ ${#config_items[@]} -ne ${#tee_items[@]} ]; then
+              echo "Error: Number of solution_configuration items (${#config_items[@]}) must match number of tee_offers items (${#tee_items[@]})"
+              exit 1
+            fi
+          fi
+
+          # Check if each configuration file exists
+          for config_item in "${config_items[@]}"; do
+            if [ ! -f "$config_item" ]; then
+              echo "Error: Configuration file specified by inputs.solution_configuration ($config_item) does not exist."
+              exit 1
+            fi
+          done
+        fi
+
     - name: Cancel previous orders
       shell: bash
       if: ${{ inputs.previous_orders != '' }}
@@ -85,7 +110,14 @@ runs:
 
         IFS=',' read -ra teeOfferIds <<< "${{ inputs.tee_offers }}"
 
-        for teeOffer in "${teeOfferIds[@]}"; do
+        # Prepare solution_configuration array
+        if [ -n "${{ inputs.solution_configuration }}" ]; then
+          IFS=',' read -ra configItems <<< "${{ inputs.solution_configuration }}"
+        fi
+
+        for i in "${!teeOfferIds[@]}"; do
+          teeOffer="${teeOfferIds[$i]}"
+          
           COMMAND="./spctl workflows create --tee $teeOffer"
 
           if [ -n "${{ inputs.base_image }}" ]; then
@@ -95,7 +127,13 @@ runs:
           COMMAND="$COMMAND --solution ${{ inputs.solution }}"
 
           if [ -n "${{ inputs.solution_configuration }}" ]; then
-            COMMAND="$COMMAND --solution-configuration ${{ inputs.solution_configuration }}"
+            # If only one configuration, use it for all tee_offers
+            if [ ${#configItems[@]} -eq 1 ]; then
+              COMMAND="$COMMAND --solution-configuration ${configItems[0]}"
+            else
+              # Use configuration with corresponding index
+              COMMAND="$COMMAND --solution-configuration ${configItems[$i]}"
+            fi
           fi
 
           # Split inputs.data into an array using a comma as a separator
