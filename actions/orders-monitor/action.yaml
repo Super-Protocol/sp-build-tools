@@ -26,7 +26,9 @@ runs:
         # Compose JSON body
         JSON_BODY="{\"items\": $JSON_ARRAY}"
         echo "Sending: $JSON_BODY"
-        curl -X POST "$URL" \
+        HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
           -H "Content-Type: application/json" \
           -H "Authorization: Bearer $API_KEY" \
-          -d "$JSON_BODY"
+          -d "$JSON_BODY")
+
+        echo "HTTP status code: ${HTTP_CODE}"
