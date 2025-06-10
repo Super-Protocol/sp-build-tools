@@ -24,8 +24,9 @@ runs:
         JSON_ARRAY=$(printf '"%s",' "${ARR[@]}")
         JSON_ARRAY="[${JSON_ARRAY%,}]"
         # Compose JSON body
-        JSON_BODY="{\"api_key\": \"$API_KEY\", \"items\": $JSON_ARRAY}"
+        JSON_BODY="{\"items\": $JSON_ARRAY}"
         echo "Sending: $JSON_BODY"
-        #curl -X POST "$URL" \
-        #  -H "Content-Type: application/json" \
-        #  -d "$JSON_BODY"
+        curl -X POST "$URL" \
+          -H "Content-Type: application/json" \
+          -H "Authorization: Bearer $API_KEY" \
+          -d "$JSON_BODY"
