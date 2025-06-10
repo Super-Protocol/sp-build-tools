@@ -152,6 +152,14 @@ runs:
           eval $COMMAND
 
           cat workflow_result.txt
+          
+          # Check if there's an error log file mentioned in the output
+          ERROR_LOG_PATH=$(cat workflow_result.txt | grep -oP 'Error log was saved to \K.*')
+          if [ -n "$ERROR_LOG_PATH" ]; then
+            echo "Error detected! Reading error log from: $ERROR_LOG_PATH"
+            cat "$ERROR_LOG_PATH"
+          fi
+          
           ORDER_ID=$(cat workflow_result.txt | grep -oP '\["\K\d+(?="\])') 
 
           orderIds+=($ORDER_ID)
