@@ -1,0 +1,31 @@
+name: 'Orders Monitor'
+description: 'Send POST request with API key and array of strings to a given URL.'
+inputs:
+  url:
+    description: 'The URL to send the POST request to.'
+    required: true
+  api_key:
+    description: 'API key for authentication.'
+    required: true
+  items:
+    description: 'Array of strings (comma-separated).'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Send POST request with curl
+      shell: bash
+      run: |
+        URL="${{ inputs.url }}"
+        API_KEY="${{ inputs.api_key }}"
+        ITEMS="${{ inputs.items }}"
+        # Convert comma-separated string to JSON array
+        IFS=',' read -ra ARR <<< "$ITEMS"
+        JSON_ARRAY=$(printf '"%s",' "${ARR[@]}")
+        JSON_ARRAY="[${JSON_ARRAY%,}]"
+        # Compose JSON body
+        JSON_BODY="{\"api_key\": \"$API_KEY\", \"items\": $JSON_ARRAY}"
+        echo "Sending: $JSON_BODY"
+        #curl -X POST "$URL" \
+        #  -H "Content-Type: application/json" \
+        #  -d "$JSON_BODY"
