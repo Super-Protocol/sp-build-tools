@@ -38,7 +38,7 @@ runs:
           IFS=',' read -ra ARR <<< "$ORDERS"
           JSON_ARRAY=""
           for ORDER in "${ARR[@]}"; do
-            JSON_ARRAY+="{\"order\":\"$ORDER\",\"name\":\"$NAME\",\"description\":\"$DESCRIPTION\"},"
+            JSON_ARRAY+="{\"id\":\"$ORDER\",\"name\":\"$NAME\",\"description\":\"$DESCRIPTION\"},"
           done
           JSON_ARRAY="[${JSON_ARRAY%,}]"
           JSON_BODY="{\"orders\": $JSON_ARRAY}"
@@ -48,7 +48,7 @@ runs:
         else
           IFS=',' read -ra ARR <<< "$ORDERS"
           for ORDER in "${ARR[@]}"; do
-            JSON_BODY="{\"order\": \"$ORDER\", \"name\": \"$NAME\", \"description\": \"$DESCRIPTION\"}"
+            JSON_BODY="{\"id\": \"$ORDER\", \"name\": \"$NAME\", \"description\": \"$DESCRIPTION\"}"
             echo "Sending: $JSON_BODY"
             HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
               -H "Content-Type: application/json" \
