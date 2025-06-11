@@ -18,47 +18,66 @@ inputs:
     description: 'Description for each order.'
     required: false
     default: ''
-  batch:
-    description: 'Send all orders in one batch (true/false).'
+  mode:
+    description: 'Action mode: create or delete.'
     required: false
-    default: 'false'
+    default: 'create'
+    type: choice
+    options:
+      - create
+      - delete
 runs:
   using: 'composite'
   steps:
-    - name: Send POST request with curl
+    - name: Create orders
+      if: ${{ inputs.mode == 'create' }}
       shell: bash
       run: |
+        set -e
         URL="${{ inputs.url }}"
         API_KEY="${{ inputs.api_key }}"
         ORDERS="${{ inputs.orders }}"
         NAME="${{ inputs.name }}"
         DESCRIPTION="${{ inputs.description }}"
-        BATCH="${{ inputs.batch }}"
-        if [[ "$BATCH" == "true" ]]; then
-          IFS=',' read -ra ARR <<< "$ORDERS"
-          JSON_ARRAY=""
-          for ORDER in "${ARR[@]}"; do
-            JSON_ARRAY+="{\"id\":\"$ORDER\",\"name\":\"$NAME\",\"description\":\"$DESCRIPTION\"},"
-          done
-          JSON_ARRAY="[${JSON_ARRAY%,}]"
-          JSON_BODY="{\"orders\": $JSON_ARRAY}"
+
+        IFS=',' read -ra ARR <<< "$ORDERS"
+        for ORDER in "${ARR[@]}"; do
+          JSON_BODY="{\"id\": \"$ORDER\", \"name\": \"$NAME\", \"description\": \"$DESCRIPTION\"}"
           echo "Sending: $JSON_BODY"
-          echo "Not implemented yet"
-          exit 1
-        else
-          IFS=',' read -ra ARR <<< "$ORDERS"
-          for ORDER in "${ARR[@]}"; do
-            JSON_BODY="{\"id\": \"$ORDER\", \"name\": \"$NAME\", \"description\": \"$DESCRIPTION\"}"
-            echo "Sending: $JSON_BODY"
-            HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
-              -H "Content-Type: application/json" \
-              -H "authorization: $API_KEY" \
-              -d "$JSON_BODY")
-            if [ "$HTTP_CODE" != "201" ]; then
-              echo "Request failed with HTTP status code: $HTTP_CODE"
-              echo "Response body:" && cat response.txt
-              exit 1
-            fi
-            echo "HTTP status code: ${HTTP_CODE}"
-          done
-        fi
+          set +e
+          HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -H "authorization: $API_KEY" \
+            -d "$JSON_BODY")
+          set -e
+          if [ "$HTTP_CODE" != "201" ]; then
+            echo "Request failed with HTTP status code: $HTTP_CODE"
+            echo "Response body:" && cat response.txt
+            exit 1
+          fi
+          echo "HTTP status code: ${HTTP_CODE}"
+        done
+    - name: Delete orders
+      if: ${{ inputs.mode == 'delete' }}
+      shell: bash
+      run: |
+        set -e
+        URL="${{ inputs.url }}"
+        API_KEY="${{ inputs.api_key }}"
+        ORDERS="${{ inputs.orders }}"
+        IFS=',' read -ra ARR <<< "$ORDERS"
+        for ORDER in "${ARR[@]}"; do
+          ENCODED_ORDER=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$ORDER")
+          echo "Deleting order: $ORDER (encoded: $ENCODED_ORDER)"
+          set +e
+          HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X DELETE "$URL/$ENCODED_ORDER" \
+            -H "authorization: $API_KEY")
+          set -e
+          if [ "$HTTP_CODE" != "204" ]; then
+            echo "Delete failed with HTTP status code: $HTTP_CODE"
+            echo "Response body:" && cat response.txt
+            exit 1
+          fi
+          echo "HTTP status code: ${HTTP_CODE}"
+        done
+
