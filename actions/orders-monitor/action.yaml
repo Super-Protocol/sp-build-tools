@@ -3,7 +3,8 @@ description: 'Create or delete recors into order monitor database through http r
 inputs:
   url:
     description: 'The URL to send the HTTP request to.'
-    required: true
+    required: false
+    default: 'https://critical-orders.superprotocol.com/api/v1/orders'
   api_key:
     description: 'API key for authentication.'
     required: true
