@@ -1,5 +1,5 @@
 name: 'Orders Monitor'
-description: 'Create or delete recors into order monitor database through http requests.'
+description: 'Create or delete records into order monitor database through http requests.'
 inputs:
   url:
     description: 'The URL to send the HTTP request to.'
