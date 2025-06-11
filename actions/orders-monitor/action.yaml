@@ -1,8 +1,8 @@
 name: 'Orders Monitor'
-description: 'Send POST request with API key and array of strings to a given URL.'
+description: 'Create or delete recors into order monitor database through http requests.'
 inputs:
   url:
-    description: 'The URL to send the POST request to.'
+    description: 'The URL to send the HTTP request to.'
     required: true
   api_key:
     description: 'API key for authentication.'
@@ -11,11 +11,11 @@ inputs:
     description: 'Array of orders (comma-separated).'
     required: true
   name:
-    description: 'Name for each order.'
+    description: 'Name field'
     required: false
     default: ''
   description:
-    description: 'Description for each order.'
+    description: 'Description field'
     required: false
     default: ''
   mode:
