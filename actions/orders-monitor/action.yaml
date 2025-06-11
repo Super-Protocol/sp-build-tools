@@ -52,7 +52,7 @@ runs:
             echo "Sending: $JSON_BODY"
             HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
               -H "Content-Type: application/json" \
-              -H "Authorization: Bearer $API_KEY" \
+              -H "authorization: $API_KEY" \
               -d "$JSON_BODY")
             if [ "$HTTP_CODE" != "201" ]; then
               echo "Request failed with HTTP status code: $HTTP_CODE"
