@@ -43,7 +43,7 @@ runs:
 
         IFS=',' read -ra ARR <<< "$ORDERS"
         for ORDER in "${ARR[@]}"; do
-          JSON_BODY="{\"id\": \"$ORDER\", \"name\": \"$NAME\", \"description\": \"$DESCRIPTION\"}"
+          JSON_BODY=$(jq -n --arg id "$ORDER" --arg name "$NAME" --arg description "$DESCRIPTION" '{id: $id, name: $name, description: $description}')
           echo "Sending: $JSON_BODY"
           set +e
           HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
