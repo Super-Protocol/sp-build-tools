@@ -7,9 +7,21 @@ inputs:
   api_key:
     description: 'API key for authentication.'
     required: true
-  items:
-    description: 'Array of strings (comma-separated).'
+  orders:
+    description: 'Array of orders (comma-separated).'
     required: true
+  name:
+    description: 'Name for each order.'
+    required: false
+    default: ''
+  description:
+    description: 'Description for each order.'
+    required: false
+    default: ''
+  batch:
+    description: 'Send all orders in one batch (true/false).'
+    required: false
+    default: 'false'
 runs:
   using: 'composite'
   steps:
@@ -18,17 +30,35 @@ runs:
       run: |
         URL="${{ inputs.url }}"
         API_KEY="${{ inputs.api_key }}"
-        ITEMS="${{ inputs.items }}"
-        # Convert comma-separated string to JSON array
-        IFS=',' read -ra ARR <<< "$ITEMS"
-        JSON_ARRAY=$(printf '"%s",' "${ARR[@]}")
-        JSON_ARRAY="[${JSON_ARRAY%,}]"
-        # Compose JSON body
-        JSON_BODY="{\"items\": $JSON_ARRAY}"
-        echo "Sending: $JSON_BODY"
-        HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
-          -H "Content-Type: application/json" \
-          -H "Authorization: Bearer $API_KEY" \
-          -d "$JSON_BODY")
-
-        echo "HTTP status code: ${HTTP_CODE}"
+        ORDERS="${{ inputs.orders }}"
+        NAME="${{ inputs.name }}"
+        DESCRIPTION="${{ inputs.description }}"
+        BATCH="${{ inputs.batch }}"
+        if [[ "$BATCH" == "true" ]]; then
+          IFS=',' read -ra ARR <<< "$ORDERS"
+          JSON_ARRAY=""
+          for ORDER in "${ARR[@]}"; do
+            JSON_ARRAY+="{\"order\":\"$ORDER\",\"name\":\"$NAME\",\"description\":\"$DESCRIPTION\"},"
+          done
+          JSON_ARRAY="[${JSON_ARRAY%,}]"
+          JSON_BODY="{\"orders\": $JSON_ARRAY}"
+          echo "Sending: $JSON_BODY"
+          echo "Not implemented yet"
+          exit 1
+        else
+          IFS=',' read -ra ARR <<< "$ORDERS"
+          for ORDER in "${ARR[@]}"; do
+            JSON_BODY="{\"order\": \"$ORDER\", \"name\": \"$NAME\", \"description\": \"$DESCRIPTION\"}"
+            echo "Sending: $JSON_BODY"
+            HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
+              -H "Content-Type: application/json" \
+              -H "Authorization: Bearer $API_KEY" \
+              -d "$JSON_BODY")
+            if [ "$HTTP_CODE" != "201" ]; then
+              echo "Request failed with HTTP status code: $HTTP_CODE"
+              echo "Response body:" && cat response.txt
+              exit 1
+            fi
+            echo "HTTP status code: ${HTTP_CODE}"
+          done
+        fi
