@@ -106,6 +106,7 @@ runs:
       id: create-workflows
       shell: bash
       run: |
+        set -e
         orderIds=()
 
         IFS=',' read -ra teeOfferIds <<< "${{ inputs.tee_offers }}"
@@ -148,11 +149,26 @@ runs:
           COMMAND="$COMMAND --storage ${{ inputs.storage_offer }} --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} --config ${{ inputs.spctl_config_file }} > workflow_result.txt"
 
           echo "COMMAND=$COMMAND"
-
+          set +e
           eval $COMMAND
+          STATUS=$?
+          set -e
 
           cat workflow_result.txt
-          ORDER_ID=$(cat workflow_result.txt | grep -oP '\["\K\d+(?="\])') 
+
+          if [ $STATUS -ne 0 ]; then
+            echo "Error: Workflow creation failed for tee $teeOffer. Rolling back..."
+            # Cancel all previously created orders
+            for cancel_id in "${orderIds[@]}"; do
+              echo "Rolling back: cancelling order $cancel_id"
+              ./spctl orders cancel $cancel_id --config ${{ inputs.spctl_config_file }} || true
+            done
+            echo "order_ids=" >> $GITHUB_OUTPUT
+            echo "Workflow creation failed and rollback performed." >&2
+            exit 1
+          fi
+
+          ORDER_ID=$(cat workflow_result.txt | grep -oP '\["\\K\d+(?="\])') 
 
           orderIds+=($ORDER_ID)
         done
