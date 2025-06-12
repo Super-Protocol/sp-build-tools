@@ -30,6 +30,7 @@ inputs:
     description: Enable rollback (cancel created orders) on workflow creation error
     required: false
     default: true
+    type: boolean
 
 outputs:
   order_ids:
