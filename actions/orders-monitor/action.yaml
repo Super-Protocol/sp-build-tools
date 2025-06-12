@@ -4,7 +4,7 @@ inputs:
   url:
     description: 'The URL to send the HTTP request to.'
     required: false
-    default: 'https://critical-orders.superprotocol.com/api/v1/orders'
+    default: 'https://critical-orders.superprotocol.com/api/v1/orders/replace-by-name'
   api_key:
     description: 'API key for authentication.'
     required: true
@@ -13,25 +13,16 @@ inputs:
     required: true
   name:
     description: 'Name field'
-    required: false
+    required: true
     default: ''
-  description:
-    description: 'Description field'
+  metadata:
+    description: 'Metadata object in JSON format.'
     required: false
-    default: ''
-  mode:
-    description: 'Action mode: create or delete.'
-    required: false
-    default: 'create'
-    type: choice
-    options:
-      - create
-      - delete
+    default: '{}'
 runs:
   using: 'composite'
   steps:
-    - name: Create orders
-      if: ${{ inputs.mode == 'create' }}
+    - name: Replace orders by name
       shell: bash
       run: |
         set -e
@@ -39,46 +30,24 @@ runs:
         API_KEY="${{ inputs.api_key }}"
         ORDERS="${{ inputs.orders }}"
         NAME="${{ inputs.name }}"
-        DESCRIPTION="${{ inputs.description }}"
+        METADATA="${{ inputs.metadata }}"
 
-        IFS=',' read -ra ARR <<< "$ORDERS"
-        for ORDER in "${ARR[@]}"; do
-          JSON_BODY=$(jq -n --arg id "$ORDER" --arg name "$NAME" --arg description "$DESCRIPTION" '{id: $id, name: $name, description: $description}')
-          echo "Sending: $JSON_BODY"
-          set +e
-          HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X POST "$URL" \
-            -H "Content-Type: application/json" \
-            -H "authorization: $API_KEY" \
-            -d "$JSON_BODY")
-          set -e
-          if [ "$HTTP_CODE" != "201" ]; then
-            echo "Request failed with HTTP status code: $HTTP_CODE"
-            echo "Response body:" && cat response.txt
-            exit 1
-          fi
-          echo "HTTP status code: ${HTTP_CODE}"
-        done
-    - name: Delete orders
-      if: ${{ inputs.mode == 'delete' }}
-      shell: bash
-      run: |
+        IFS=',' read -ra IDS <<< "$ORDERS"
+        IDS_JSON=$(printf '"%s",' "${IDS[@]}")
+        IDS_JSON="[${IDS_JSON%,}]"
+
+        JSON_BODY=$(jq -n --arg name "$NAME" --argjson ids "$IDS_JSON" --argjson metadata "$METADATA" '{name: $name, ids: $ids, metadata: $metadata}')
+        echo "Sending: $JSON_BODY"
+        set +e
+        HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X PUT "$URL" \
+          -H "Content-Type: application/json" \
+          -H "authorization: $API_KEY" \
+          -d "$JSON_BODY")
         set -e
-        URL="${{ inputs.url }}"
-        API_KEY="${{ inputs.api_key }}"
-        ORDERS="${{ inputs.orders }}"
-        IFS=',' read -ra ARR <<< "$ORDERS"
-        for ORDER in "${ARR[@]}"; do
-          ENCODED_ORDER=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1], safe=''))" "$ORDER")
-          echo "Deleting order: $ORDER (encoded: $ENCODED_ORDER)"
-          set +e
-          HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X DELETE "$URL/$ENCODED_ORDER" \
-            -H "authorization: $API_KEY")
-          set -e
-          if [ "$HTTP_CODE" != "204" ]; then
-            echo "Delete failed with HTTP status code: $HTTP_CODE"
-            echo "Response body:" && cat response.txt
-            exit 1
-          fi
-          echo "HTTP status code: ${HTTP_CODE}"
-        done
+        if [ "$HTTP_CODE" != "200" ]; then
+          echo "Request failed with HTTP status code: $HTTP_CODE"
+          echo "Response body:" && cat response.txt
+          exit 1
+        fi
+        echo "HTTP status code: ${HTTP_CODE}"
 
