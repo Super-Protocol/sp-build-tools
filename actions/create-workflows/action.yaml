@@ -26,6 +26,10 @@ inputs:
   min_rent_minutes:
     description: How long order should run
     default: '129600'
+  rollingback_on_error:
+    description: Enable rollback (cancel created orders) on workflow creation error
+    required: false
+    default: true
 
 outputs:
   order_ids:
@@ -156,7 +160,7 @@ runs:
 
           cat workflow_result.txt
 
-          if [ $STATUS -ne 0 ]; then
+          if [ $STATUS -ne 0 ] && [ "${{ inputs.rollingback_on_error }}" = "true" ]; then
             echo "Error: Workflow creation failed for tee $teeOffer. Rolling back..."
             # Cancel all previously created orders
             for cancel_id in "${orderIds[@]}"; do
