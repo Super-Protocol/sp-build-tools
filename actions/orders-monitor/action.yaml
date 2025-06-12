@@ -32,6 +32,9 @@ runs:
         NAME="${{ inputs.name }}"
         METADATA="${{ inputs.metadata }}"
         
+        # Format metadata to ensure proper JSON structure
+        METADATA=$(echo "$METADATA" | sed 's/{\([^"{}]*\):/{"\\1":/g; s/,\([^"{}]*\):/,"\\1":/g')
+        
         # Validate metadata JSON
         echo "$METADATA" | jq empty 2>/dev/null || {
             echo "Invalid JSON in metadata: $METADATA"
