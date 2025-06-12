@@ -33,8 +33,7 @@ runs:
         METADATA="${{ inputs.metadata }}"
 
         IFS=',' read -ra IDS <<< "$ORDERS"
-        IDS_JSON=$(printf '"%s",' "${IDS[@]}")
-        IDS_JSON="[${IDS_JSON%,}]"
+        IDS_JSON=$(printf '%s\n' "${IDS[@]}" | jq -R . | jq -s .)
 
         JSON_BODY=$(jq -n --arg name "$NAME" --argjson ids "$IDS_JSON" --argjson metadata "$METADATA" '{name: $name, ids: $ids, metadata: $metadata}')
         echo "Sending: $JSON_BODY"
