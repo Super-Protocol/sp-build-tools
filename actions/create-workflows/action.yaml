@@ -168,7 +168,7 @@ runs:
             exit 1
           fi
 
-          ORDER_ID=$(cat workflow_result.txt | grep -oP '\["\\K\d+(?="\])') 
+          ORDER_ID=$(cat workflow_result.txt | grep -oP '\["\K\d+(?="\])') 
 
           orderIds+=($ORDER_ID)
         done
