@@ -28,7 +28,7 @@ runs:
         set -e
         URL="${{ inputs.url }}"
         API_KEY="${{ inputs.api_key }}"
-        ORDERS="${{ inputs.orders }}"
+        ORDERS='${{ inputs.orders }}'
         NAME='${{ inputs.name }}'
         METADATA='${{ inputs.metadata }}'
         
