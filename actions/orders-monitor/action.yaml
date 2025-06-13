@@ -37,8 +37,11 @@ runs:
           exit 1
         }
 
-        IFS=',' read -ra IDS <<< "$ORDERS"
-        IDS_JSON=$(printf '%s\n' "${IDS[@]}" | jq -R . | jq -s .)
+        IDS_JSON=$(jq -Rn --arg input "$ORDERS" '
+          $input
+          | split(",")
+          | map(gsub("^\"|\"$"; ""))
+        ')
 
         JSON_BODY=$(jq -n \
             --arg name "$NAME" \
