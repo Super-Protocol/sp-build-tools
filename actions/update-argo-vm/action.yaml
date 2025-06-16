@@ -47,7 +47,7 @@ runs:
         fi
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
 
-        if [ "${{ inputs.target }}" == "testnet" ] || [ "${{ inputs.target }}" == "mainnet" ]; then
+        if [ "${{ inputs.target }}" == "mainnet" ]; then
           ARGO_SP_ENV=main
         else
           ARGO_SP_ENV=${{ inputs.target }}
