@@ -59,7 +59,7 @@ runs:
         elif [ "${{ inputs.target }}" == "stage" ]; then
           CLUSTER=ovh-stg/stage
         elif [ "${{ inputs.target }}" == "testnet" ]; then
-          CLUSTER=ovh-testnet/testnet
+          CLUSTER=ovh-us-dev/testnet-real
         elif [ "${{ inputs.target }}" == "mainnet" ]; then
           CLUSTER=ovh-us-dev/testnet
         fi
@@ -136,7 +136,7 @@ runs:
         # Process each ID
         for id in $offer_id; do
             # replace in JSON config elements encryption & resource and write back it into provider-offers-config.json via temporary files
-            
+
             cat provider-offers-config.json | jq  ".[] | select(.id==$id) |= . + {encryption:$encryption_block}" | jq --slurp '.' >  temp-1.json
             cat temp-1.json | jq  ".[] | select(.id==$id) |= . + {resource:$resource_block}" | jq --slurp '.' >  temp-2.json
             cat temp-2.json | jq  ".[] | select(.id==$id) |= . + {hash:$hash_block}" | jq --slurp '.' >  provider-offers-config.json
