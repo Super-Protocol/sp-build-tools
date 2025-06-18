@@ -1,0 +1,65 @@
+name: 'Orders Monitor'
+description: 'Create or delete records into order monitor database through http requests.'
+inputs:
+  url:
+    description: 'The URL to send the HTTP request to.'
+    required: false
+    default: 'https://critical-orders.superprotocol.com/api/v1/orders/replace-by-name'
+  api_key:
+    description: 'API key for authentication.'
+    required: true
+  orders:
+    description: 'Array of orders (comma-separated).'
+    required: true
+  name:
+    description: 'Name field'
+    required: true
+    default: ''
+  metadata:
+    description: 'Metadata object in JSON format.'
+    required: false
+    default: '{}'
+runs:
+  using: 'composite'
+  steps:
+    - name: Replace orders by name
+      shell: bash
+      run: |
+        set -e
+        URL="${{ inputs.url }}"
+        API_KEY="${{ inputs.api_key }}"
+        ORDERS='${{ inputs.orders }}'
+        NAME='${{ inputs.name }}'
+        METADATA='${{ inputs.metadata }}'
+        
+        echo "$METADATA" | jq . > /dev/null || {
+          echo "Invalid JSON in metadata input"
+          exit 1
+        }
+
+        IDS_JSON=$(jq -Rn --arg input "$ORDERS" '
+          $input
+          | split(",")
+          | map(gsub("^\"|\"$"; ""))
+        ')
+
+        JSON_BODY=$(jq -n \
+            --arg name "$NAME" \
+            --argjson ids "$IDS_JSON" \
+            --argjson metadata "$METADATA" \
+            '{name: $name, ids: $ids, metadata: $metadata}')
+
+        echo "Sending: $JSON_BODY"
+        set +e
+        HTTP_CODE=$(curl -s -o response.txt -w "%{http_code}" -X PUT "$URL" \
+          -H "Content-Type: application/json" \
+          -H "authorization: $API_KEY" \
+          -d "$JSON_BODY")
+        set -e
+        if [ "$HTTP_CODE" != "200" ]; then
+          echo "Request failed with HTTP status code: $HTTP_CODE"
+          echo "Response body:" && cat response.txt
+          exit 1
+        fi
+        echo "HTTP status code: ${HTTP_CODE}"
+
