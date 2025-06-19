@@ -27,10 +27,8 @@ inputs:
     required: true
   tunnel_server_mrenclave:
     description: mrEnclave of tunnel server solution that tunnel client trusts to
-    required: true
   tunnel_server_mrsigner:
     description: mrSigner of tunnel server solution that tunnel client trusts to
-    required: true
   ssl_key_file:
     description: Path to file with SSL PEM key file
     required: true
@@ -43,6 +41,8 @@ inputs:
     description: Path to content folder. If not provided content should be part of solution
   data:
     description: Path to additional input resource files or data offers, separated by comma. Will be used with --data option on "spctl workflow create command"
+  solution-configuration-base64:
+    description: Solution configuration data in JSON format encoded in base64
 
 outputs:
   order_ids:
@@ -140,24 +140,30 @@ runs:
         cp ${{ inputs.ssl_key_file }} $WORKDIR/archive
         cp ${{ inputs.ssl_certificate_file }} $WORKDIR/archive
 
-        CONFIG=$(cat << EOF
-        {
-          "tunnels": [
-            {
-              "sgxMrEnclave": "${{ inputs.tunnel_server_mrenclave }}",
-              "sgxMrSigner": "${{ inputs.tunnel_server_mrsigner }}"
+        # Create base configuration with jq
+        jq -n \
+          --arg auth_token "${{ inputs.auth_token }}" \
+          --arg domain "${{ inputs.domain }}" \
+          --arg key "./${{ inputs.ssl_key_file }}" \
+          --arg cert "./${{ inputs.ssl_certificate_file }}" \
+          '{
+            "authToken": $auth_token,
+            "site": {
+              "domain": $domain,
+              "key": $key,
+              "cert": $cert
             }
-          ],
-          "authToken": "${{ inputs.auth_token }}",
-          "site": {
-            "domain": "${{ inputs.domain }}",
-            "key": "./${{ inputs.ssl_key_file }}",
-            "cert": "./${{ inputs.ssl_certificate_file }}"
-          }
-        }
-        EOF
-        )
-        echo "$CONFIG" > $WORKDIR/archive/config.json
+          }' > $WORKDIR/archive/config.json
+
+        # Add tunnels configuration if both mrenclave and mrsigner are provided
+        if [ -n "${{ inputs.tunnel_server_mrenclave }}" ] && [ -n "${{ inputs.tunnel_server_mrsigner }}" ]; then
+          jq \
+            --arg mrenclave "${{ inputs.tunnel_server_mrenclave }}" \
+            --arg mrsigner "${{ inputs.tunnel_server_mrsigner }}" \
+            '.tunnels = [{"sgxMrEnclave": $mrenclave, "sgxMrSigner": $mrsigner}]' \
+            $WORKDIR/archive/config.json > $WORKDIR/archive/config.json.tmp && \
+            mv $WORKDIR/archive/config.json.tmp $WORKDIR/archive/config.json
+        fi
 
         if [ -n "${{ inputs.content_folder }}" ]; then
           cp -r ${{ inputs.content_folder }} $WORKDIR/archive/content
@@ -167,6 +173,13 @@ runs:
         tar -czf $DATA_FILE -C $WORKDIR/archive/ .
 
         echo "DATA_FILE=$DATA_FILE" >> $GITHUB_ENV
+    
+    - name: Prepare solution configuration
+      if: ${{ inputs.solution-configuration-base64 != '' }}
+      shell: bash
+      run: |
+        echo ${{ inputs.solution-configuration-base64 }} | base64 -d > $WORKDIR/solution-configuration.json
+        echo "SOLUTION_CONFIGURATION=$WORKDIR/solution-configuration.json" >> $GITHUB_ENV
 
     - name: Upload data file
       id: upload-data-file
@@ -187,7 +200,7 @@ runs:
 
     - name: Create tunnel-server-order workflows
       id: create-workflows
-      uses: Super-Protocol/sp-build-tools/actions/create-workflows@v1
+      uses: Super-Protocol/sp-build-tools/actions/create-workflows@feature/SP-4843
       with:
         spctl_config_file: ${{ inputs.spctl_config_file }}
         tee_offers: ${{ inputs.tee_offers }}
@@ -197,6 +210,7 @@ runs:
         storage_offer: ${{ env.STORAGE_OFFER }}
         previous_orders: ${{ inputs.previous_orders }}
         min_rent_minutes: ${{ inputs.min_rent_minutes }}
+        solution_configuration: ${{ env.SOLUTION_CONFIGURATION }}
 
     - name: Cleanup
       shell: bash
