@@ -41,7 +41,7 @@ inputs:
     description: Path to content folder. If not provided content should be part of solution
   data:
     description: Path to additional input resource files or data offers, separated by comma. Will be used with --data option on "spctl workflow create command"
-  solution-configuration-base64:
+  solution_configuration_base64:
     description: Solution configuration data in JSON format encoded in base64
 
 outputs:
@@ -175,10 +175,10 @@ runs:
         echo "DATA_FILE=$DATA_FILE" >> $GITHUB_ENV
     
     - name: Prepare solution configuration
-      if: ${{ inputs.solution-configuration-base64 != '' }}
+      if: ${{ inputs.solution_configuration_base64 != '' }}
       shell: bash
       run: |
-        echo ${{ inputs.solution-configuration-base64 }} | base64 -d > $WORKDIR/solution-configuration.json
+        echo ${{ inputs.solution_configuration_base64 }} | base64 -d > $WORKDIR/solution-configuration.json
         echo "SOLUTION_CONFIGURATION=$WORKDIR/solution-configuration.json" >> $GITHUB_ENV
 
     - name: Upload data file
