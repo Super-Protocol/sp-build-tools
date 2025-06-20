@@ -6,7 +6,7 @@
   "license": "BSL-1.1",
   "main": "index.js",
   "scripts": {
-    "build": "ncc build index.js -o dist"
+    "build": "ncc build index.js -o dist --target es2022 -m"
   },
   "dependencies": {
     "@actions/core": "1.11.0",
