@@ -1,0 +1,10 @@
+{
+  "name": "update-offer-action-nodejs",
+  "version": "1.0.0",
+  "description": "Updates an SPCTL offer using a Node.js action.",
+  "main": "index.js",
+  "dependencies": {
+    "@actions/core": "1.11.0",
+    "@actions/exec": "1.1.1"
+  }
+}

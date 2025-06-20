@@ -1,51 +1,17 @@
-name: 'Update offer'
+name: "Update offer"
 description: "Updates an existing SPCTL offer by providing a new configuration file."
 
 inputs:
   spctl_config_file:
-    description: 'Path to spctl config file'
-    default: ./config.json
+    description: "Path to spctl config file"
+    default: "./config.json"
   offer_id:
-    description: 'The ID of the offer to update.'
+    description: "The ID of the offer to update."
     required: true
   configuration_file_path:
-    description: 'Path to the new JSON configuration file for the offer.'
+    description: "Path to the new JSON configuration file for the offer."
     required: true
 
 runs:
-  using: 'composite'
-  steps:
-    - name: Check spctl
-      uses: Super-Protocol/sp-build-tools/actions/check-spctl@v1
-      with:
-        spctl_config_file: ${{ inputs.spctl_config_file }}
-
-    - name: Validate input
-      shell: bash
-      run: |
-        CONFIG_FILE="${{ inputs.configuration_file_path }}"
-
-        # 1. Check if the configuration file exists
-        if [ ! -f "$CONFIG_FILE" ]; then
-          echo "Error: Configuration file specified by 'configuration_file_path' does not exist at '$CONFIG_FILE'."
-          exit 1
-        fi
-
-        # 2. Check if the file content is valid JSON using jq
-        # The '-e' flag ensures jq exits with a non-zero status code on invalid JSON.
-        # Output is redirected to /dev/null as we only care about the exit code.
-        if ! jq -e . "$CONFIG_FILE" > /dev/null 2>&1; then
-          echo "Error: The file '$CONFIG_FILE' does not contain valid JSON."
-          exit 1
-        fi
-
-        echo "Input validation passed: File exists and contains valid JSON."
-
-    - name: Update offer
-      shell: bash
-      run: |
-        echo "Attempting to update offer ${{ inputs.offer_id }} with configuration from ${{ inputs.configuration_file_path }}..."
-
-        ./spctl offers update value ${{ inputs.offer_id }} --configuration ${{ inputs.configuration_file_path }} --config ${{ inputs.spctl_config_file }}
-
-        echo "Offer update command executed successfully."
+  using: "node20"
+  main: "index.js"
