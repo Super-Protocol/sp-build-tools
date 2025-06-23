@@ -153,11 +153,11 @@ runs:
 
           COMMAND="$COMMAND --storage ${{ inputs.storage_offer }} --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} --config ${{ inputs.spctl_config_file }} > workflow_result.txt"
 
-          echo "COMMAND=$COMMAND"
-          cat ${{ inputs.solution_configuration }}
-          cat ${{ inputs.data }}
-          echo "order_ids=666" >> $GITHUB_OUTPUT
-          exit 0
+          #echo "COMMAND=$COMMAND"
+          #cat ${{ inputs.solution_configuration }}
+          #cat ${{ inputs.data }}
+          #echo "order_ids=666" >> $GITHUB_OUTPUT
+          #exit 0
           set +e
           eval $COMMAND
           STATUS=$?
