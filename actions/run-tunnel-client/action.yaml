@@ -196,7 +196,7 @@ runs:
 
     - name: Create tunnel-server-order workflows
       id: create-workflows
-      uses: Super-Protocol/sp-build-tools/actions/create-workflows@feature/SP-4843
+      uses: Super-Protocol/sp-build-tools/actions/create-workflows@v1
       with:
         spctl_config_file: ${{ inputs.spctl_config_file }}
         tee_offers: ${{ inputs.tee_offers }}
