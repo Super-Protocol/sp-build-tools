@@ -84,7 +84,7 @@ runs:
       run: |
         BASE_IMAGE_OFFERS=(6 4 6 13)
         TUNNEL_CLIENT_STATIC=(13 11 13 20)
-        TUNNEL_CLIENT_STATIC_IMAGE=(126 267 0 20)
+        TUNNEL_CLIENT_STATIC_IMAGE=(45 267 0 20)
         TUNNEL_CLIENT_DYNAMIC=(14 12 14 21)
         TUNNEL_CLIENT_DYNAMIC_IMAGE=(0 0 0 0)
         STORAGE_OFFERS=(39 38 25 47)
@@ -176,7 +176,7 @@ runs:
         tar -czf $DATA_FILE -C $WORKDIR/archive/ .
 
         echo "DATA_FILE=$DATA_FILE" >> $GITHUB_ENV
-    
+
     - name: Upload data file
       id: upload-data-file
       uses: Super-Protocol/sp-build-tools/actions/upload-file@v1

@@ -69,7 +69,7 @@ runs:
       shell: bash
       run: |
         if [ "${{ inputs.target }}" == "develop" ]; then
-          TUNNEL_SERVER_OFFER=124
+          TUNNEL_SERVER_OFFER=44
         elif [ "${{ inputs.target }}" == "stage" ]; then
           TUNNEL_SERVER_OFFER=265
         elif [ "${{ inputs.target }}" == "testnet" ]; then
