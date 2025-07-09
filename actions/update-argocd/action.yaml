@@ -55,13 +55,13 @@ runs:
         if [ -n "${{ inputs.cluster }}" ]; then
           CLUSTER=${{ inputs.cluster }}
         elif [ "${{ inputs.target }}" == "develop" ]; then
-          CLUSTER=ovh-de-dev/dev
+          CLUSTER=zen/develop
         elif [ "${{ inputs.target }}" == "stage" ]; then
-          CLUSTER=ovh-stg/stage
+          CLUSTER=zen/staging
         elif [ "${{ inputs.target }}" == "testnet" ]; then
-          CLUSTER=ovh-us-dev/testnet-real
+          CLUSTER=zev/testnet
         elif [ "${{ inputs.target }}" == "mainnet" ]; then
-          CLUSTER=ovh-us-dev/testnet
+          CLUSTER=zev/mainnet
         fi
 
         echo "CLUSTER=$CLUSTER" >> $GITHUB_ENV
