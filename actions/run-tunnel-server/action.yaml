@@ -71,7 +71,7 @@ runs:
         if [ "${{ inputs.target }}" == "develop" ]; then
           TUNNEL_SERVER_OFFER=44
         elif [ "${{ inputs.target }}" == "stage" ]; then
-          TUNNEL_SERVER_OFFER=265
+          TUNNEL_SERVER_OFFER=9
         elif [ "${{ inputs.target }}" == "testnet" ]; then
           TUNNEL_SERVER_OFFER=0
         elif [ "${{ inputs.target }}" == "mainnet" ]; then
