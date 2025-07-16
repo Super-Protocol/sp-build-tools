@@ -59,9 +59,9 @@ runs:
         elif [ "${{ inputs.target }}" == "stage" ]; then
           CLUSTER=zen/staging
         elif [ "${{ inputs.target }}" == "testnet" ]; then
-          CLUSTER=zev/testnet
+          CLUSTER=zen/testnet
         elif [ "${{ inputs.target }}" == "mainnet" ]; then
-          CLUSTER=zev/mainnet
+          CLUSTER=zen/mainnet
         fi
 
         echo "CLUSTER=$CLUSTER" >> $GITHUB_ENV
