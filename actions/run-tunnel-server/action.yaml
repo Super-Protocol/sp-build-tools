@@ -87,7 +87,7 @@ runs:
         elif [ "${{ inputs.target }}" == "stage" ]; then
           STORAGE_OFFER=38
         elif [ "${{ inputs.target }}" == "testnet" ]; then
-          STORAGE_OFFER=25
+          STORAGE_OFFER=48
         elif [ "${{ inputs.target }}" == "mainnet" ]; then
           STORAGE_OFFER=47
         fi
