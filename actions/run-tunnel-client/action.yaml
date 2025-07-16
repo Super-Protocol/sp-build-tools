@@ -87,22 +87,22 @@ runs:
         TUNNEL_CLIENT_STATIC_IMAGE=(45 267 0 20)
         TUNNEL_CLIENT_DYNAMIC=(14 12 14 21)
         TUNNEL_CLIENT_DYNAMIC_IMAGE=(0 0 0 0)
-        STORAGE_OFFERS=(39 38 25 47)
+        STORAGE_OFFERS=(39 38 48 47)
 
         TARGETS=("develop" "stage" "testnet" "mainnet")
 
         for i in "${!TARGETS[@]}"; do
           if [ "${{ inputs.target }}" == "${TARGETS[$i]}" ]; then
             case "${{ inputs.tunnel_client }}" in
-              "static") 
+              "static")
                 if [ "${{ inputs.use_base_image }}" == "true" ]; then
-                  TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC[$i]} 
+                  TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC[$i]}
                   BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
                 else
                   TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_STATIC_IMAGE[$i]}
                 fi
                 ;;
-              "dynamic") 
+              "dynamic")
                 if [ "${{ inputs.use_base_image }}" == "true" ]; then
                   TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_DYNAMIC[$i]}
                   BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
@@ -110,8 +110,8 @@ runs:
                   TUNNEL_CLIENT_OFFER=${TUNNEL_CLIENT_DYNAMIC_IMAGE[$i]}
                 fi
                 ;;
-              *) 
-                TUNNEL_CLIENT_OFFER=${{ inputs.tunnel_client }} 
+              *)
+                TUNNEL_CLIENT_OFFER=${{ inputs.tunnel_client }}
                 [ "${{ inputs.use_base_image }}" == "true" ] && BASE_IMAGE_OFFER=${BASE_IMAGE_OFFERS[$i]}
                 ;;
             esac
