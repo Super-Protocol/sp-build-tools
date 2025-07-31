@@ -189,7 +189,7 @@ runs:
       run: |
         DATA=${{ steps.upload-data-file.outputs.resource }}
         if [ -n "${{ inputs.data }}" ]; then
-         DATA="$DATA,${{ inputs.data }}"
+         DATA="$DATA;${{ inputs.data }}"
         fi
 
         echo "DATA=$DATA" >> $GITHUB_ENV

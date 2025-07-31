@@ -16,7 +16,7 @@ inputs:
   solution_configuration:
     description: Path to solution configuration file or multiple files separated by comma
   data:
-    description: Data offer number or path to data resource file. If data several, separate by comma (103,./data-settings.json)
+    description: Data offer number (with or without slot) or path to data resource file, separated by semicolon (e.g., "offerId,slotId;offerId;./data-settings.json")
     default: ''
   storage_offer:
     description: Storage offer number
@@ -55,14 +55,14 @@ runs:
           fi
         fi
 
-        # Split inputs.data into an array using a comma as a separator
-        IFS=',' read -ra data_items <<< "${{ inputs.data }}"
+        # Split inputs.data into an array using a semicolon as a separator
+        IFS=';' read -ra data_items <<< "${{ inputs.data }}"
 
         # Loop through each item in the array
         for item in "${data_items[@]}"; do
-          # Check if the item is a number
-          if ! [[ "$item" =~ ^[0-9]+$ ]]; then
-            # If it's not a number, check if it's a file path and if the file exists
+          # Check if the item contains only numbers and commas (comma-separated numbers)
+          if ! [[ "$item" =~ ^[0-9,]+$ ]]; then
+            # If it's not numbers with commas, check if it's a file path and if the file exists
             if [ ! -f "$item" ]; then
               echo "Error: File specified by inputs.data ($item) does not exist."
               exit 1
@@ -142,12 +142,12 @@ runs:
             fi
           fi
 
-          # Split inputs.data into an array using a comma as a separator
-          IFS=',' read -ra data_items <<< "${{ inputs.data }}"
+          # Split inputs.data into an array using a semicolon as a separator
+          IFS=';' read -ra data_items <<< "${{ inputs.data }}"
 
           # Loop through each item in the array
           for item in "${data_items[@]}"; do
-            # Append "--data $item" to the COMMAND variable for both numbers and file paths
+            # Append "--data $item" to the COMMAND variable for each item
             COMMAND="$COMMAND --data $item"
           done
 
