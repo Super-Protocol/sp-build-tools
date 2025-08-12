@@ -116,7 +116,7 @@ runs:
         fi
 
         # get offer id by solution instance fullpath (select block, which should be replaced in JSON config)
-        offer_id=$(jq ".[] | select(.resource.filepath | contains(\"${{ inputs.solution_name }}\")) | .id" provider-offers-config.json)
+        offer_id=$(jq ".[] | select(.resource.filepath | startswith(\"${{ inputs.solution_name }}\")) | .id" provider-offers-config.json)
         if [ -z "$offer_id" ]; then
           echo "Offer id is not found"
           exit 1
