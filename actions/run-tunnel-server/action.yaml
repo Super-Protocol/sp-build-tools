@@ -79,21 +79,6 @@ runs:
         fi
         echo "TUNNEL_SERVER_OFFER=$TUNNEL_SERVER_OFFER" >> $GITHUB_ENV
 
-    - name: Set storage offer
-      shell: bash
-      run: |
-        if [ "${{ inputs.target }}" == "develop" ]; then
-          STORAGE_OFFER=39
-        elif [ "${{ inputs.target }}" == "stage" ]; then
-          STORAGE_OFFER=38
-        elif [ "${{ inputs.target }}" == "testnet" ]; then
-          STORAGE_OFFER=48
-        elif [ "${{ inputs.target }}" == "mainnet" ]; then
-          STORAGE_OFFER=47
-        fi
-
-        echo "STORAGE_OFFER=$STORAGE_OFFER" >> $GITHUB_ENV
-
     - name: Prepare working directory
       shell: bash
       run: |
@@ -127,7 +112,6 @@ runs:
         base_image: ${{ env.BASE_IMAGE_OFFER }}
         solution: ${{ env.TUNNEL_SERVER_OFFER }}
         data: ${{ steps.upload-data-file.outputs.resource }}
-        storage_offer: ${{ env.STORAGE_OFFER }}
         previous_orders: ${{ inputs.previous_orders }}
         min_rent_minutes: ${{ inputs.min_rent_minutes }}
 
