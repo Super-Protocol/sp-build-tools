@@ -18,6 +18,9 @@ inputs:
   data:
     description: Data offer number (with or without slot) or path to data resource file, separated by semicolon (e.g., "offerId,slotId;offerId;./data-settings.json")
     default: ''
+  storage_offer:
+    description: Storage offer number
+    required: true
   previous_orders:
     description: Previous order numbers to cancel, separated by comma (eg. 100,102)
   min_rent_minutes:
@@ -71,10 +74,10 @@ runs:
         if [ -n "${{ inputs.solution_configuration }}" ]; then
           # Split inputs.solution_configuration into an array using a comma as a separator
           IFS=',' read -ra config_items <<< "${{ inputs.solution_configuration }}"
-
+          
           # Split inputs.tee_offers into an array using a comma as a separator
           IFS=',' read -ra tee_items <<< "${{ inputs.tee_offers }}"
-
+          
           # If multiple configurations provided, count must match tee_offers count
           if [ ${#config_items[@]} -gt 1 ]; then
             if [ ${#config_items[@]} -ne ${#tee_items[@]} ]; then
@@ -120,7 +123,7 @@ runs:
 
         for i in "${!teeOfferIds[@]}"; do
           teeOffer="${teeOfferIds[$i]}"
-
+          
           COMMAND="./spctl workflows create --tee $teeOffer"
 
           if [ -n "${{ inputs.base_image }}" ]; then
@@ -148,7 +151,7 @@ runs:
             COMMAND="$COMMAND --data $item"
           done
 
-          COMMAND="$COMMAND --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} --config ${{ inputs.spctl_config_file }} > workflow_result.txt"
+          COMMAND="$COMMAND --storage ${{ inputs.storage_offer }} --orders-limit 10000 --min-rent-minutes ${{ inputs.min_rent_minutes }} --config ${{ inputs.spctl_config_file }} > workflow_result.txt"
 
           echo "COMMAND=$COMMAND"
           set +e
@@ -170,7 +173,7 @@ runs:
             exit 1
           fi
 
-          ORDER_ID=$(cat workflow_result.txt | grep -oP '\["\K\d+(?="\])')
+          ORDER_ID=$(cat workflow_result.txt | grep -oP '\["\K\d+(?="\])') 
 
           orderIds+=($ORDER_ID)
         done
