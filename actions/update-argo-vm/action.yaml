@@ -28,7 +28,7 @@ runs:
     - name: Validate repository input
       shell: bash
       run: |
-        if [ "${{ inputs.commit_type }}" != "direct-commit" ]; then
+        if [ "${{ inputs.commit_type }}" != "direct-commit" ] && [ "${{ inputs.commit_type }}" != "pull-request" ]; then
           echo "Invalid commit type: ${{ inputs.commit_type }}"
           exit 1
         fi
