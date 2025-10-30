@@ -1,0 +1,17 @@
+name: "Update offer"
+description: "Updates an existing SPCTL offer by providing a new configuration file."
+
+inputs:
+  spctl_config_file:
+    description: "Path to spctl config file"
+    default: "./config.json"
+  offer_id:
+    description: "The ID of the offer to update."
+    required: true
+  configuration_file_path:
+    description: "Path to the new JSON configuration file for the offer."
+    required: true
+
+runs:
+  using: "node20"
+  main: "dist/index.js"
