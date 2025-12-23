@@ -1,0 +1,69 @@
+name: 'Upload to Storj'
+description: 'Packs a folder and uploads it to Storj using Vault-provided credentials and encryption.'
+
+inputs:
+  vaultToken:
+    description: 'Vault token with read access to resources secret'
+    required: true
+  serviceName:
+    description: 'Logical service name'
+    required: true
+  branchName:
+    description: 'Branch name used to name the archive'
+    required: true
+  folderToUpload:
+    description: 'Folder path (relative to repo root) to pack and upload'
+    required: true
+  vaultUrl:
+    description: 'Vault base URL'
+    required: false
+    default: 'https://vault.superprotocol.io'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Install deps and build action
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        npm ci
+
+    - name: Normalize branch name
+      id: normalize
+      shell: bash
+      run: |
+        set -euo pipefail
+        RAW="${{ inputs.branchName }}"
+        LOWER=$(echo "$RAW" | tr '[:upper:]' '[:lower:]')
+        NORM=$(echo "$LOWER" | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-{2,}/-/g')
+        echo "branch=$NORM" >> "$GITHUB_OUTPUT"
+
+    - name: Pack folder to tar.gz
+      shell: bash
+      id: pack
+      run: |
+        set -euo pipefail
+        TAR_PATH="$RUNNER_TEMP/${{ steps.normalize.outputs.branch }}.tar.gz"
+        SRC_DIR="${{ github.workspace }}/${{ inputs.folderToUpload }}"
+        if [ ! -d "$SRC_DIR" ]; then
+          echo "Folder not found: $SRC_DIR" >&2
+          exit 1
+        fi
+        tar -czf "$TAR_PATH" -C "$SRC_DIR" .
+        echo "archive_path=$TAR_PATH" >> "$GITHUB_OUTPUT"
+
+    - name: Upload archive
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        node index.js \
+          --vault-url "${{ inputs.vaultUrl }}" \
+          --service-name "${{ inputs.serviceName }}" \
+          --branch-name "${{ steps.normalize.outputs.branch }}" \
+          --vault-token "${{ inputs.vaultToken }}" \
+          --archive-path "${{ steps.pack.outputs.archive_path }}"
