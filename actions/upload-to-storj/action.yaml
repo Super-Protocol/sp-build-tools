@@ -60,10 +60,11 @@ runs:
     - name: Upload archive
       shell: bash
       working-directory: ${{ github.action_path }}
+      env:
+        VAULT_TOKEN: ${{ inputs.vaultToken }}
       run: |
         node index.js \
           --vault-url "${{ inputs.vaultUrl }}" \
           --service-name "${{ inputs.serviceName }}" \
           --branch-name "${{ steps.normalize.outputs.branch }}" \
-          --vault-token "${{ inputs.vaultToken }}" \
           --archive-path "${{ steps.pack.outputs.archive_path }}"

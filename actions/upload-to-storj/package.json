@@ -1,12 +1,12 @@
 {
     "name": "sp-storj-uploader",
     "version": "1.0.0",
-    "description": "Updates an SPCTL offer using a Node.js action.",
+    "description": "Uploads archived content to Storj using Vault-provided credentials.",
     "author": "SuperProtocol",
     "license": "BSL-1.1",
     "main": "index.js",
     "dependencies": {
         "@super-protocol/sp-files-addon": "^0.13.2",
-        "axios": "^1.7.7"
+        "axios": "^1.13.2"
     }
 }

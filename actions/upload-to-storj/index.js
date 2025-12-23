@@ -13,14 +13,12 @@ Usage:
     --vault-url <url> \
     --service-name <name> \
     --branch-name <branch> \
-    --vault-token <token> \
     --archive-path <path>
 
 Required arguments:
   --vault-url         Vault base URL 
   --service-name      Logical service name
   --branch-name       Branch name
-  --vault-token       Vault token with read access to resources secret
   --archive-path      Path to .tar.gz archive to upload
 
 Optional arguments:
@@ -31,7 +29,6 @@ Examples:
     --vault-url https://vault.example.com \
     --service-name svc \
     --branch-name main \
-    --vault-token $VAULT_TOKEN \
     --archive-path /tmp/svc.tar.gz
   
 Notes:
@@ -91,8 +88,8 @@ async function fetchVaultResources({ vaultUrl, vaultToken, vaultPath }) {
   return resources;
 }
 
-function pickResourceByName(resources, serviceName /*, branchName */) {
-  const found = resources.find((r) => r?.name === serviceName);
+function pickResourceByName(resources, serviceName) {
+  const found = resources.find((resource) => resource?.name === serviceName);
   if (found) return { match: found, matchedName: serviceName };
   return { match: undefined, matchedName: undefined };
 }
@@ -117,13 +114,13 @@ async function main() {
   const vaultUrl = args['vault-url'];
   const serviceName = args['service-name'];
   const branchName = args['branch-name'];
-  const vaultToken = args['vault-token'];
+  const vaultToken = process.env.VAULT_TOKEN;
   const archivePath = args['archive-path'];
   const vaultPath = 'infra/data/swarm-services';
 
   if (!vaultUrl || !serviceName || !branchName || !vaultToken || !archivePath) {
     process.stderr.write(
-      '[ERROR] Missing required arguments. Expected --vault-url --service-name --branch-name --vault-token --archive-path\n',
+      '[ERROR] Missing required arguments. Expected --vault-url --service-name --branch-name --archive-path and VAULT_TOKEN\n',
     );
     process.exitCode = 1;
     return;
@@ -165,7 +162,7 @@ async function main() {
         const t = typeof total === 'number' ? total : 0;
         const c = typeof current === 'number' ? current : 0;
         const pct = t > 0 ? Math.floor((c / t) * 100) : 0;
-        console.log(`${key ?? remoteFilepath} ${c}/${t} (${pct}%)\n`);
+        console.log(`${key ?? remoteFilepath} ${c}/${t} (${pct}%)`);
       },
     };
 
