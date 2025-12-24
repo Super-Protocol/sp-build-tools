@@ -9,7 +9,7 @@ inputs:
     description: 'Logical service name'
     required: true
   branchName:
-    description: 'Branch name used to name the archive'
+    description: 'Branch name used to name the archive and the remote storage path in Storj'
     required: true
   folderToUpload:
     description: 'Folder path (relative to repo root) to pack and upload'
@@ -33,27 +33,28 @@ runs:
       run: |
         npm ci
 
-    - name: Normalize branch name
-      id: normalize
+    - name: Validate folder
       shell: bash
       run: |
         set -euo pipefail
-        RAW="${{ inputs.branchName }}"
-        LOWER=$(echo "$RAW" | tr '[:upper:]' '[:lower:]')
-        NORM=$(echo "$LOWER" | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//; s/-{2,}/-/g')
-        echo "branch=$NORM" >> "$GITHUB_OUTPUT"
+        SRC_DIR="${{ inputs.folderToUpload }}"
+        if [ ! -d "$SRC_DIR" ]; then
+          echo "Error: Folder specified by inputs.folderToUpload ($SRC_DIR) does not exist." >&2
+          exit 1
+        fi
+        if [ "$(ls -A "$SRC_DIR" | wc -l | tr -d ' ')" -eq 0 ]; then
+          echo "Error: Folder specified by inputs.folderToUpload ($SRC_DIR) is empty." >&2
+          exit 1
+        fi
 
     - name: Pack folder to tar.gz
       shell: bash
       id: pack
       run: |
         set -euo pipefail
-        TAR_PATH="$RUNNER_TEMP/${{ steps.normalize.outputs.branch }}.tar.gz"
-        SRC_DIR="${{ github.workspace }}/${{ inputs.folderToUpload }}"
-        if [ ! -d "$SRC_DIR" ]; then
-          echo "Folder not found: $SRC_DIR" >&2
-          exit 1
-        fi
+        SRC_DIR="${{ inputs.folderToUpload }}"
+        BASENAME="$(basename "$SRC_DIR")"
+        TAR_PATH="$RUNNER_TEMP/${BASENAME}.tar.gz"
         tar -czf "$TAR_PATH" -C "$SRC_DIR" .
         echo "archive_path=$TAR_PATH" >> "$GITHUB_OUTPUT"
 
@@ -66,5 +67,5 @@ runs:
         node index.js \
           --vault-url "${{ inputs.vaultUrl }}" \
           --service-name "${{ inputs.serviceName }}" \
-          --branch-name "${{ steps.normalize.outputs.branch }}" \
+          --branch-name "${{ inputs.branchName }}" \
           --archive-path "${{ steps.pack.outputs.archive_path }}"

@@ -2,6 +2,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 const axios = require('axios');
+const kebabCase = require('lodash.kebabcase');
 const { upload } = require('@super-protocol/sp-files-addon');
 
 function printHelp() {
@@ -99,7 +100,7 @@ async function ensureFileExists(p) {
     const st = await fs.stat(p);
     if (!st.isFile()) throw new Error('not a file');
   } catch {
-    throw new Error(`Archive not found: ${p}`);
+    throw new Error(`Archive file not found or is not a valid file: ${p}`);
   }
 }
 
@@ -144,7 +145,7 @@ async function main() {
       throw new Error('Vault resource missing storageType or writeCredentials');
     }
 
-    const remoteFilepath = branchName;
+    const remoteFilepath = kebabCase(branchName);
     const targetResource = {
       type: 'STORAGE_PROVIDER',
       filepath: remoteFilepath,
