@@ -53,8 +53,7 @@ runs:
       run: |
         set -euo pipefail
         SRC_DIR="${{ inputs.folderToUpload }}"
-        BASENAME="$(basename "$SRC_DIR")"
-        TAR_PATH="$RUNNER_TEMP/${BASENAME}.tar.gz"
+        TAR_PATH="$RUNNER_TEMP/${{ inputs.serviceName }}.tar.gz"
         tar -czf "$TAR_PATH" -C "$SRC_DIR" .
         echo "archive_path=$TAR_PATH" >> "$GITHUB_OUTPUT"
 
