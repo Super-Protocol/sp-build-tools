@@ -1,5 +1,5 @@
-name: 'Upload to Storj'
-description: 'Packs a folder and uploads it to Storj using Vault-provided credentials and encryption.'
+name: 'Upload swarm service'
+description: 'Packs a folder and uploads it for Secrets Gatekeeper using Vault-provided credentials and encryption.'
 
 inputs:
   vaultToken:
