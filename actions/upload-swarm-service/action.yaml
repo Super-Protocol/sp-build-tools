@@ -1,0 +1,70 @@
+name: 'Upload swarm service'
+description: 'Packs a folder and uploads it for Secrets Gatekeeper using Vault-provided credentials and encryption.'
+
+inputs:
+  vaultToken:
+    description: 'Vault token with read access to resources secret'
+    required: true
+  serviceName:
+    description: 'Logical service name'
+    required: true
+  branchName:
+    description: 'Branch name used to name the archive and the remote storage path in Storj'
+    required: true
+  folderToUpload:
+    description: 'Folder path (relative to repo root) to pack and upload'
+    required: true
+  vaultUrl:
+    description: 'Vault base URL'
+    required: false
+    default: 'https://vault.superprotocol.io'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Install deps and build action
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: |
+        npm ci
+
+    - name: Validate folder
+      shell: bash
+      run: |
+        set -euo pipefail
+        SRC_DIR="${{ inputs.folderToUpload }}"
+        if [ ! -d "$SRC_DIR" ]; then
+          echo "Error: Folder specified by inputs.folderToUpload ($SRC_DIR) does not exist." >&2
+          exit 1
+        fi
+        if [ "$(ls -A "$SRC_DIR" | wc -l | tr -d ' ')" -eq 0 ]; then
+          echo "Error: Folder specified by inputs.folderToUpload ($SRC_DIR) is empty." >&2
+          exit 1
+        fi
+
+    - name: Pack folder to tar.gz
+      shell: bash
+      id: pack
+      run: |
+        set -euo pipefail
+        SRC_DIR="${{ inputs.folderToUpload }}"
+        TAR_PATH="$RUNNER_TEMP/${{ inputs.serviceName }}.tar.gz"
+        tar -czf "$TAR_PATH" -C "$SRC_DIR" .
+        echo "archive_path=$TAR_PATH" >> "$GITHUB_OUTPUT"
+
+    - name: Upload archive
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        VAULT_TOKEN: ${{ inputs.vaultToken }}
+      run: |
+        node index.js \
+          --vault-url "${{ inputs.vaultUrl }}" \
+          --service-name "${{ inputs.serviceName }}" \
+          --branch-name "${{ inputs.branchName }}" \
+          --archive-path "${{ steps.pack.outputs.archive_path }}"
